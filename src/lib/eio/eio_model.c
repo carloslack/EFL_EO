@@ -662,7 +662,7 @@ _eio_model_emodel_load(Eo *obj, Eio_Model_Data *priv)
 static Emodel_Load_Status
 _eio_model_emodel_load_status_get(Eo *obj EINA_UNUSED, Eio_Model_Data *priv)
 {
-   return priv->status_load;
+   return priv->load_status;
 }
 
 /**
