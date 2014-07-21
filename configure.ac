@@ -3765,6 +3765,12 @@ fi
 
 #### End of Ecore_Evas
 
+#### Emodel
+EFL_LIB_START([Emodel])
+EFL_ADD_LIBS([EMODEL], [-lm])
+EFL_LIB_END([Emodel])
+#### End of Emodel
+
 #### Eio
 EFL_LIB_START([Eio])
 
@@ -3778,6 +3784,7 @@ EFL_LIB_START([Eio])
 EFL_PLATFORM_DEPEND([EIO], [evil])
 
 ### Checks for libraries
+EFL_INTERNAL_DEPEND_PKG([EIO], [emodel])
 EFL_INTERNAL_DEPEND_PKG([EIO], [ecore])
 EFL_INTERNAL_DEPEND_PKG([EIO], [eet])
 EFL_INTERNAL_DEPEND_PKG([EIO], [eo])
@@ -3980,6 +3987,7 @@ EFL_INTERNAL_DEPEND_PKG([EDJE], [ecore-imf])
 EFL_INTERNAL_DEPEND_PKG([EDJE], [ecore-imf-evas])
 EFL_INTERNAL_DEPEND_PKG([EDJE], [embryo])
 EFL_INTERNAL_DEPEND_PKG([EDJE], [eio])
+EFL_INTERNAL_DEPEND_PKG([EDJE], [emodel])
 
 EFL_OPTIONAL_INTERNAL_DEPEND_PKG([EDJE], [${want_physics}], [ephysics])
 EFL_OPTIONAL_INTERNAL_DEPEND_PKG([EDJE], [${want_multisense}], [ecore-audio])
@@ -4345,6 +4353,7 @@ pc/eo.pc
 pc/eo-cxx.pc
 pc/eolian.pc
 pc/eolian-cxx.pc
+pc/emodel.pc
 pc/evas-fb.pc
 pc/evas-opengl-x11.pc
 pc/evas-opengl-sdl.pc
