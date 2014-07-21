@@ -1,0 +1,270 @@
+/*
+ * type Emodel_Load_Status: enum _Emodel_Load_Status
+ * {
+ *    EMODEL_LOAD_STATUS_ERROR = -1, /*@ Error in Load Model *
+ *    EMODEL_LOAD_STATUS_FETCHING, /*@ Model is Dummy, used in lazy fetching children_get *
+ *    EMODEL_LOAD_STATUS_FETCHED, /*@ Model as ready to load *
+ *    EMODEL_LOAD_STATUS_LOADING, /*@ Model Load in progress *
+ *    EMODEL_LOAD_STATUS_LOADED, /*@ Model as ready to fetch properties and children *
+ *    EMODEL_LOAD_STATUS_UNLOADING, /*@ Model Unload in progress *
+ *    EMODEL_LOAD_STATUS_UNLOADED /*@ Model Unloaded *
+ * }
+ */
+
+interface Emodel ()
+{
+   legacy_prefix: null;
+      methods {
+         load {
+            /*@
+              Load emodel.
+
+              By convention this means loading data from an external source and populating
+              the models properties and children with it. For example in the case of file
+              system backed model, this means opening the relevant files and reading the
+              data from them(creating the properties and children from it).
+              the model emit EMODEL_EVENT_LOAD_STATUS after end with Emodel_Load_Status
+              @warning This convention should be followed, but no guarantees of behaviour
+              by user defined types can be given.
+
+              @see Emodel_Load_Status
+              @see emodel_unload
+              @see emodel_load_status_get
+
+              @since 1.11 */
+         }
+         unload {
+            /*@
+              Unload emodel.
+
+              By convention this means releasing data gotten from an external source. For
+              example of a database backed model this might mean releasing the iterator for
+              the currently loaded data or deleting a temporary table.
+              the model emit EMODEL_EVENT_LOAD_STATUS after end with model load status
+              @warning This convention should be followed, but no guarantees of behaviour
+              by user defined types can be given.
+
+              @see Emodel_Load_Status
+              @see emodel_load
+              @see emodel_load_status_get
+
+              @since 1.11 */
+         }
+         load_status_get {
+            /*@
+              Get a load emodel current status.
+
+              @return @c Emodel_Load_Status
+
+              By convention this means get a current status a model.
+
+              @see Emodel_Load_Status
+              @see emodel_load
+
+              @since 1.11 */
+              return Emodel_Load_Status;
+         }
+         properties_load {
+            /*@
+              Properties emodel load.
+
+              @since 1.11 */
+         }
+         children_load {
+            /*@
+              Children emodel load.
+
+              @since 1.11 */
+         }
+         properties_list_get {
+            /*@
+              Get properties list from model.
+
+              @return @c EINA_TRUE, on success, @c EINA_FALSE otherwise
+
+              properties_list_get is due to provide callers a way the fetch the current
+              properties implemented/used by the model.
+              The event EMODEL_EVENT_PROPERTIES_CHANGE may be raised to notify listeners.
+
+              @see EMODEL_EVENT_PROPERTIES_CHANGE
+
+              @since 1.11 */
+
+            return Eina_Bool;
+            params {
+               @out const(Eina_List)*<const(char)*> properties_list; /*@ list of current properties */
+            }
+         }
+         property_get {
+            /*@
+              Retrieve the value of a given property name.
+
+              @return @c EINA_TRUE, on success, @c EINA_FALSE otherwise
+
+              The caller firstly call emodel_property_list int order to fetch the
+              current properties implemented/used by the model.
+              At this point the caller is free to fetch values from properties.
+              The event EMODEL_EVENT_PROPERTIES_CHANGE may be raised to notify
+              listeners of the property/value.
+
+              @see emodel_properties_list_get
+              @see EMODEL_EVENT_PROPERTIES_CHANGE
+
+              @since 1.11 */
+
+            return Eina_Bool;
+            params {
+               @in  const(char)* property; /*@ Property name */
+               @out Eina_Value value; /*@ Where to store the value of the property.
+                              It will be overwritten and setup with the type the item is bound to */
+            }
+         }
+         property_set {
+            /*@
+              Set a property value of a given property name.
+
+              @return @c EINA_TRUE, on success, @c EINA_FALSE in readonly property or error
+
+              The caller must ensure to call at least emodel_prop_list before being
+              able to se properties.
+              This function sets a new property value into given property name. Once
+              the operation is completed the concrete implementation should raise
+              EMODEL_EVENT_PROPERTIES_CHANGE event in order to notify listeners of the
+              new property's value.
+
+              If model don't have the property tried setting, has 2 possibilities,
+              raise a error or create the new property in model
+
+              @see emodel_property_get
+              @see EMODEL_EVENT_PROPERTIES_CHANGE
+
+              @since 1.11 */
+
+            return Eina_Bool;
+            params {
+               @in const(char)* property; /*@ Property name */
+               @in const(Eina_Value)* value; /*@ New value */
+            }
+         }
+         child_add {
+            /*@
+              Add a new child.
+
+              @return @c Emodel* on success, @c NULL otherwise
+
+              Add a new child of a internal keeping. When the child is effectively
+              added the event EMODEL_EVENT_CHILD_ADD is then raised.
+              @see EMODEL_EVENT_CHILD_ADD
+
+              @since 1.11 */
+
+            return Eo *;
+         }
+         child_remove {
+            /*@
+              Remove a child.
+
+              @return @c EINA_TRUE, on success, @c EINA_FALSE otherwise
+
+              Remove a child of a internal keeping. When the child is effectively
+              removed the event EMODEL_EVENT_CHILD_REMOVED is then raised to give a
+              chance for listeners to perform any cleanup and/or update references.
+
+              @see EMODEL_EVENT_CHILD_REMOVED
+
+              @since 1.11 */
+
+            return Eina_Bool;
+            params {
+               @in Eo* child; /*@ Child to be removed */
+            }
+         }
+         children_get {
+            /*@
+              Get children.
+
+              @return @c EINA_TRUE, on success, @c EINA_FALSE otherwise
+
+              The caller firstly receive EMODEL_LOAD_STATUS_LOADED int order to
+              fetch the children.
+              Retrieve a list of child, if retrieve dummy model objects
+              (EMODEL_LOAD_STATUS_FETCHING) will load in background , emitting their own
+              EMODEL_LOAD_STATUS_FETCHED events when they get data.
+
+              @see emodel_load
+              @see emodel_load_status_get
+
+              @since 1.11 */
+
+            return Eina_Bool;
+            params {
+               @out const(Eina_List)*<Eo*> children_list;
+            }
+         }
+         children_slice_get {
+            /*@
+              Get children slice.
+
+              @return @c EINA_TRUE, on success, @c EINA_FALSE otherwise
+
+              The caller firstly receive EMODEL_LOAD_STATUS_LOADED int order to
+              fetch the children.
+              'slice' is a range, for example if we have 20 childs a slice could be
+              the range from 3(start) to 4(count), see:
+              child 0  [no]
+              child 1  [no]
+              child 2  [yes]
+              child 3  [yes]
+              child 4  [yes]
+              child 5  [yes]
+              child 6  [no]
+              child 7  [no]
+
+              Retrieve a list of child, if retrieve dummy model objects will load
+              in background EMODEL_LOAD_STATUS_FETCHING, emitting their own
+              EMODEL_LOAD_STATUS_FETCHED events when they get data.
+
+              @see emodel_children_get
+              @see emodel_load
+              @see emodel_load_status_get
+
+              @since 1.11 */
+
+            return Eina_Bool;
+            params {
+               @in  size_t start; /*@ Range begin - start from here. */
+               @in  size_t count; /*@ Range size.*/
+               @out const(Eina_List)*<Eo*> children_list;
+            }
+         }
+         children_count_get {
+            /*@
+              Get children count.
+
+              @return @c EINA_TRUE, on success, @c EINA_FALSE otherwise
+
+              The caller firstly receive EMODEL_LOAD_STATUS_LOADED int order to
+              get a count children.
+
+              @see emodel_children_get
+              @see emodel_load
+              @see emodel_load_status_get
+
+              @since 1.11 */
+
+            return Eina_Bool;
+            params {
+               @out size_t children_count;
+            }
+         }
+      }
+
+   events {
+      load,status: Emodel_Load_Status; /*@ Event dispatch when load status change */
+      properties,changed: Emodel_Properties_Evt; /*@ Event dispatched when properties is available. */
+      child,added; /*@ Event dispatched when new child is added. */
+      child,removed; /*@ Event dispatched when child is removed. */
+      children,count,changed; /*@ Event dispatched when children count is finished. */
+   }
+}
+

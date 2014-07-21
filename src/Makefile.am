@@ -8,7 +8,8 @@ EOLIAN_FLAGS = \
 	       -I$(srcdir)/lib/eo \
 	       -I$(srcdir)/lib/evas/canvas \
 	       -I$(srcdir)/lib/edje \
-	       -I$(srcdir)/lib/ecore_audio
+	       -I$(srcdir)/lib/ecore_audio \
+	       -I$(srcdir)/lib/emodel
 
 ELUA_GEN_FLAGS =
 
@@ -42,6 +43,7 @@ include Makefile_Ecore_File.am
 include Makefile_Ecore_Avahi.am
 include Makefile_Embryo.am
 include Makefile_Eio.am
+include Makefile_Emodel.am
 include Makefile_Eldbus.am
 include Makefile_Efreet.am
 include Makefile_Eeze.am
