@@ -63,7 +63,7 @@ package_efl() {
              "eina=$pkgver" "eio=$pkgver" "embryo=$pkgver" "emotion=$pkgver" "emodel=$pkgver"
              "ephysics=$pkgver" "ethumb=$pkgver" "evas=$pkgver")
   conflicts+=('ecore' 'edje' 'eet' 'eeze' 'efreet' 'eina' 'eio' 'embryo' 'emotion'
-              'ethumb' 'evas' 'emodel')
+              'ethumb' 'evas')
   cd "../.."
   make -j1 DESTDIR="$pkgdir/" install
   install -Dm644 README "$pkgdir/usr/share/doc/${pkgname%-git}/README"

@@ -65,91 +65,71 @@ static Eina_Bool
  }
 
 static Eina_Bool
-_load_slice_cb(void *data, Eo *obj, const Eo_Event_Description *desc EINA_UNUSED, void *event_info)
-{
-   Eina_Value value_prop;
-   static int children_n = 0;
-   int *children_total = data;
-   Emodel_Load_Status *st = event_info;
-
-   if (*st == EMODEL_LOAD_STATUS_FETCHED)
-     {
-         children_n++;
-         eo_do(obj, emodel_property_get("filename", &value_prop));
-         printf("emodel_fetched filename %s\n", eina_value_to_string(&value_prop));
-         if (children_n == *children_total)
-           {
-                ecore_main_loop_quit();
-           }
-     }
-
-   return EINA_TRUE;
-}
-
-static Eina_Bool
 _load_status_cb(void *data EINA_UNUSED, Eo *obj, const Eo_Event_Description *desc EINA_UNUSED, void *event_info)
 {
-   Eina_Value value_prop;
-   static int children_n = 0;
-   static Eo *filemodel = NULL;
    Emodel_Load_Status *st = event_info;
+   printf("Load CHANGE\n");
 
-   if (*st == EMODEL_LOAD_STATUS_LOADED)
+   if (*st & EMODEL_LOAD_STATUS_LOADED_CHILDREN)
+     printf("Children is Loaded\n");
+
+   if (*st & EMODEL_LOAD_STATUS_LOADED_PROPERTIES)
+     printf("Properties is Loaded\n");
+
+   if ((*st & EMODEL_LOAD_STATUS_LOADED) == EMODEL_LOAD_STATUS_LOADED)
      {
-         const Eina_List *children_list;
-         Eina_List *l;
+         Eina_List *children_list, *l;
+         Eina_Value value_prop;
          Eo *child;
          size_t total;
+         char *str;
 
-         filemodel = obj;
          printf("Model is Loaded\n");
          eo_do(obj, emodel_property_get("filename", &value_prop));
-         printf("emodel_loaded filename %s\n", eina_value_to_string(&value_prop));
+         str = eina_value_to_string(&value_prop);
+         printf("emodel_loaded filename %s\n", str);
+         eina_value_flush(&value_prop);
+         free(str);
+
          eo_do(obj, emodel_property_get("size", &value_prop));
-         printf("emodel_loaded size %s\n", eina_value_to_string(&value_prop));
+         str = eina_value_to_string(&value_prop);
+         printf("emodel_loaded size %s\n", str);
+         eina_value_flush(&value_prop);
+         free(str);
+
          eo_do(obj, emodel_property_get("mtime", &value_prop));
-         printf("emodel_loaded mtime %s\n", eina_value_to_string(&value_prop));
+         str = eina_value_to_string(&value_prop);
+         printf("emodel_loaded mtime %s\n", str);
+         eina_value_flush(&value_prop);
+         free(str);
 
          eo_do(obj, emodel_children_count_get(&total));
          printf("emodel_test count %d\n", (int)total);
-
-         eo_do(obj, emodel_children_get(&children_list));
+         eo_do(obj, emodel_children_get((const Eina_List **)&children_list));
          printf("emodel_test children_list_size %d\n", eina_list_count(children_list));
 
-         EINA_LIST_FOREACH((Eina_List *)children_list, l, child)
-           if (child)
-             eo_do(child, eo_event_callback_add(EMODEL_EVENT_LOAD_STATUS, _load_status_cb, NULL));
-
-     }
-
-   if (*st == EMODEL_LOAD_STATUS_FETCHED)
-     {
-         children_n++;
-         eo_do(obj, emodel_property_get("filename", &value_prop));
-         printf("emodel_fetched %d = filename %s\n", (int)children_n, eina_value_to_string(&value_prop));
-         if (children_n == reqs.children)
+         EINA_LIST_FOREACH(children_list, l, child)
            {
-                const Eina_List *children_l;
-                Eina_List *l, *cl;
-                Eo *child;
-
-                if (filemodel)
-                  {
-                      eo_do(filemodel, emodel_children_slice_get(5, 5, &children_l));
-                      cl = eina_list_clone(children_l);
-                      children_n = eina_list_count(cl);
-                      printf("emodel_test children_list_size %d\n", children_n);
-                      if (children_n)
-                      ecore_main_loop_quit();
-
-                      EINA_LIST_FOREACH(cl, l, child)
-                        if (child) {
-                          eo_ref(child);
-                          eo_do(child, eo_event_callback_add(EMODEL_EVENT_LOAD_STATUS, _load_slice_cb, &children_n));
-                        }
-                  }
-
+               eo_do(child, emodel_property_get("filename", &value_prop));
+               str = eina_value_to_string(&value_prop);
+               printf("emodel_children_get filename %s\n", str);
+               eina_value_flush(&value_prop);
+               free(str);
            }
+
+         eo_do(obj, emodel_children_slice_get(5, 5, &children_list));
+         printf("emodel_test children_list_size %d\n", eina_list_count(children_list));
+
+         EINA_LIST_FREE(children_list, child)
+           {
+               eo_do(child, emodel_property_get("filename", &value_prop));
+               str = eina_value_to_string(&value_prop);
+               printf("emodel_chidlren_slice_get filename %s\n", str);
+               eina_value_flush(&value_prop);
+               free(str);
+               eo_unref(child);
+           }
+         ecore_main_loop_quit();
      }
 
    return EINA_TRUE;
@@ -164,8 +144,11 @@ _properties_cb(void *data EINA_UNUSED, Eo *obj EINA_UNUSED, const Eo_Event_Descr
 
    EINA_LIST_FOREACH(evt->changed_properties, l, pair)
      {
+        char *str;
+        str = eina_value_to_string(&pair->value);
         fprintf(stdout, "Received changed property=%s, value=%s\n",
-                pair->property, eina_value_to_string(&pair->value));
+                pair->property, str);
+        free(str);
         if(!strcmp(pair->property, "is_dir"))
           reqs.changed_is_dir = 1;
         if(!strcmp(pair->property, "is_lnk"))
@@ -201,6 +184,9 @@ START_TEST(emodel_test_test_file)
 {
    Eo *filemodel = NULL;
    Eina_Value value_prop;
+#ifdef _RUN_LOCAL_TEST
+   Eina_Value nameset_value;
+#endif
    const Eina_List *properties_list;
    Eina_List *l;
    char *str;
@@ -223,13 +209,19 @@ START_TEST(emodel_test_test_file)
 
    handler = ecore_event_handler_add(ECORE_EVENT_SIGNAL_EXIT, exit_func, NULL);
 
+   eina_value_setup(&value_prop, EINA_VALUE_TYPE_STRING);
+
    eo_do(filemodel, emodel_property_get("filename", &value_prop));
-   printf("emodel_test filename %s\n", eina_value_to_string(&value_prop));
+   str = eina_value_to_string(&value_prop);
+   printf("emodel_test filename %s\n", str);
+
+   eina_value_flush(&value_prop);
+   free(str);
 
    i = 0;
    eo_do(filemodel, emodel_properties_list_get(&properties_list));
    EINA_LIST_FOREACH((Eina_List *)properties_list, l, str)
-      {
+     {
         fprintf(stdout, "Returned property list %d: %s\n", i++, str);
         if(!strcmp(str, "filename"))
           reqs.proplist_filename = 1;
@@ -245,18 +237,22 @@ START_TEST(emodel_test_test_file)
           reqs.proplist_is_lnk = 1;
         else if(!strcmp(str, "size"))
           reqs.proplist_size = 1;
-      }
+     }
 
    ecore_main_loop_begin();
 
 #ifdef _RUN_LOCAL_TEST
-   Eina_Value *nameset = eina_value_new(EINA_VALUE_TYPE_STRING);
-   eina_value_set(nameset, "/tmp/emodel_test");
-   eo_do(filemodel, emodel_property_set("path", nameset));
+   eina_value_setup(&nameset_value, EINA_VALUE_TYPE_STRING);
+   eina_value_setup(&value_prop, EINA_VALUE_TYPE_STRING);
+   eina_value_set(&nameset_value, "/tmp/emodel_test");
+   eo_do(filemodel, emodel_property_set("path", &nameset_value));
+   eina_value_flush(&nameset_value);
+   emodel_property_get("path", &value_prop);
    eo_do(filemodel, emodel_property_get("path", &value_prop));
+   eina_value_flush(&value_prop);
 #endif
-   sleep(1); /**< EIO is asynchrounous so I must give some time for deletions to execute */
 
+   sleep(1); /**< EIO is asynchrounous so I must give some time for deletions to execute */
    eo_unref(filemodel);
    ecore_shutdown();
    eina_shutdown();

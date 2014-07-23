@@ -1,14 +1,19 @@
 /*
  * type Emodel_Load_Status: enum _Emodel_Load_Status
  * {
- *    EMODEL_LOAD_STATUS_ERROR = -1, /*@ Error in Load Model *
- *    EMODEL_LOAD_STATUS_FETCHING, /*@ Model is Dummy, used in lazy fetching children_get *
- *    EMODEL_LOAD_STATUS_FETCHED, /*@ Model as ready to load *
- *    EMODEL_LOAD_STATUS_LOADING, /*@ Model Load in progress *
- *    EMODEL_LOAD_STATUS_LOADED, /*@ Model as ready to fetch properties and children *
- *    EMODEL_LOAD_STATUS_UNLOADING, /*@ Model Unload in progress *
- *    EMODEL_LOAD_STATUS_UNLOADED /*@ Model Unloaded *
+ *    EMODEL_LOAD_STATUS_ERROR = 0, /*@ Error in Load Model *
+ *    EMODEL_LOAD_STATUS_LOADING_PROPERTIES = (1 << 0), /*@ properties load in progress *
+ *    EMODEL_LOAD_STATUS_LOADING_CHILDREN =   (1 << 1), /*@ children load in progress *
+ *    EMODEL_LOAD_STATUS_LOADING = (1 << 0) | (1 << 1), /*@ children and properties load in progress *
+ *
+ *    EMODEL_LOAD_STATUS_LOADED_PROPERTIES = (1 << 2), /*@ Model as ready to fetch properties *
+ *    EMODEL_LOAD_STATUS_LOADED_CHILDREN =   (1 << 3), /*@ Model as ready to fetch children *
+ *    EMODEL_LOAD_STATUS_LOADED = (1 << 2) | (1 << 3), /*@ Model as ready to fetch properties and children *
+ *
+ *    EMODEL_LOAD_STATUS_UNLOADING = (1 << 4), /*@ Model Unload in progress *
+ *    EMODEL_LOAD_STATUS_UNLOADED =  (1 << 5)  /*@ Model Unloaded *
  * }
+ *
  * type Emodel_Property_Pair: struct _Emodel_Property_Pair
  * {
  *  value: Eina_Value; /*@ the new property value *
@@ -18,7 +23,7 @@
  * type Emodel_Property_EVT: struct _Emodel_Property_EVT
  * {
  *  changed_properties: Eina_List* <Emodel_Property_Pair*>; /*@ List of changed properties *
- *  invalidated_properties: Eina_Array* <const(char)*>; /*@ Removed properties identified by name *
+ *  invalidated_properties: Eina_List* <const(char)*>; /*@ Removed properties identified by name *
  * }
  */
 
@@ -227,18 +232,13 @@ interface Emodel ()
               @return @c EINA_TRUE, on success, @c EINA_FALSE otherwise
 
               Before being able to get the children list the model status must be
-              on loaded status (EMODEL_LOAD_STATUS_LOADED).
+              on loaded status (EMODEL_LOAD_STATUS_LOADED_CHILDREN).
 
-              A children list is returned immediately after calling
-              children_get.
-              Each child may be ready or not depending own his load status.
-              We can know if the child is ready by calling
-              emodel_load_status_get.
-              If the IS ready the returned value will emit
-              EMODEL_LOAD_STATUS_FETCHED. If the child is NOT
-              ready then EMODEL_LOAD_STATUS_FETCHING is returned
-              and when it is ready will emmit EMODEL_LOAD_STATUS_CHANGED
-              event and the value will be EMODEL_LOAD_STATUS_FETCHED.
+              A children list is returned immediately after calling children_get.
+              There is not guarantee that the returned list will be still
+              available after the mainloop exit. If one wants to make sure
+              the children are kept available it would be necessary
+              do eo_ref() for children from the list.
 
               @see emodel_load
               @see Emodel_Load_Status
@@ -262,6 +262,8 @@ interface Emodel ()
 
               children_slice_get behaves alike children_get except that it returns
               a range of children instead of the whole list.
+              The returned list must be freed when it is no longer needed and
+              eo_unref() must be invoked for children.
 
               Since 'slice' is a range, for example if we have 20 childs a slice could be
               the range from 3(start) to 4(count), see:
@@ -288,7 +290,7 @@ interface Emodel ()
             params {
                @in  size_t start; /*@ Range begin - start from here. */
                @in  size_t count; /*@ Range size.*/
-               @out const(Eina_List)*<Eo*> children_list;
+               @out Eina_List*<Eo*> children_list;
             }
          }
          children_count_get {

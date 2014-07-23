@@ -10,6 +10,7 @@
 #include <check.h>
 
 void emodel_test_file(TCase* tc);
+void emodel_test_monitor_add(TCase* tc);
 
 typedef struct _Emodel_Test_Case Emodel_Test_Case;
 struct _Emodel_Test_Case
@@ -20,6 +21,7 @@ struct _Emodel_Test_Case
 
 static const Emodel_Test_Case etc[] = {
    { "File", emodel_test_file },
+   { "Monitor Add", emodel_test_monitor_add },
    { NULL, NULL }
 };
 

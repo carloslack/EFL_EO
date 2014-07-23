@@ -4,9 +4,7 @@
 #define PROP_LIST_SIZE 7
 
 typedef struct _Eio_Model_Data                 Eio_Model_Data;
-typedef struct _Eio_Model_Children_Data        Eio_Model_Children_Data;
 //typedef struct _Eio_Model_Child_Add            Eio_Model_Child_Add;
-typedef struct _Eio_Model_Children_Count       Eio_Model_Children_Count;
 typedef struct _Eio_Model_Monitor_Data         Eio_Model_Monitor_Data;
 
 struct _Eio_Model_Monitor_Data
@@ -25,7 +23,6 @@ struct _Eio_Model_Monitor_Data
 enum {
    EIO_MODEL_PROP_FILENAME = 0,
    EIO_MODEL_PROP_PATH,
-   EIO_MODEL_PROP_ICON,
    EIO_MODEL_PROP_MTIME,
    EIO_MODEL_PROP_IS_DIR,
    EIO_MODEL_PROP_IS_LNK,
@@ -39,10 +36,8 @@ struct _Eio_Model_Data
    Eina_List *properties_list;
    Eina_Value *properties;
    Emodel_Load_Status load_status;
-   size_t children_count;
+   int load_pending;
    Eina_List *children_list;
-   Eina_Bool children_loaded;
-   Eina_Bool properties_loaded;
    /**< EIO data */
    Eio_File *file;
    const Eina_Stat *stat;
@@ -63,37 +58,5 @@ struct _Eio_Model_Child_Add
    char *name;
 };
 */
-
-struct _Eio_Model_Children_Count
-{
-   Eio_Model_Data *priv;
-   size_t total;
-};
-
-struct _Eio_Model_Children_Data
-{
-   Eio_Model_Data *priv;
-   Eio_File *lsref;
-   Eina_List *children_list;
-   size_t start;
-   size_t count;
-   size_t idx;
-   size_t cidx;
-};
-
-static inline void
-_emodel_dealloc_memory(void *ptr, ...)
-{
-   va_list al;
-   void *data;
-   va_start(al,ptr);
-
-   for(data = ptr; data != NULL; data = va_arg(al, void*))
-     {
-        free(data);
-        data = NULL;
-     }
-   va_end(al);
-}
 
 #endif

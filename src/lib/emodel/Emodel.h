@@ -37,13 +37,11 @@
  * in events to be able to recieve notifications about state changes in Emodel.
  * Some of currently available events are:
  *
- *   EMODEL_EVENT_PROPERTIES_CHANGE
- *   EMODEL_EVENT_PROPERTY_CHANGE
- *   EMODEL_EVENT_CHILD_ADD
- *   EMODEL_EVENT_CHILD_DEL
- *   EMODEL_EVENT_CHILD_SELECTED
- *   EMODEL_EVENT_CHILDREN_GET
- *   EMODEL_EVENT_CHILDREN_COUNT_GET
+ *   EMODEL_EVENT_LOAD_STATUS
+ *   EMODEL_EVENT_PROPERTIES_CHANGED
+ *   EMODEL_EVENT_CHILD_ADDED
+ *   EMODEL_EVENT_CHILD_REMOVED
+ *   EMODEL_EVENT_CHILDREN_COUNT_CHANGED
  *
  *   Example code using Emodel_Eio that returns the number of files in '/tmp' directory:
  *
@@ -51,14 +49,16 @@
  * static Eina_Bool
  * _children_count_cb(void *data EINA_UNUSED, Eo *obj EINA_UNUSED, const Eo_Event_Description *desc EINA_UNUSED, void *event_info)
  * {
- *    unsigned int *len = event_info;
- *    fprintf(stdout, "Children count len=%d\n", *len);
+ *    size_t *len = event_info;
+ *    fprintf(stdout, "Children count len=%lu\n", *len);
  *    return EINA_TRUE;
  * }
  *
  * int
  * main(int argc, const char **argv)
  * {
+ *    size_t total;
+ *    Eo *model;
  *    if(!ecore_init())
  *    {
  *       fprintf(stderr, "ERROR: Cannot init Ecore!\n");
@@ -70,9 +70,10 @@
  *       return 1;
  *    }
  *
- *    Eo *model = eo_add_custom(EMODEL_EIO_CLASS, NULL, emodel_eio_constructor("/tmp"));
- *    eo_do(model, eo_event_callback_add(EMODEL_EVENT_CHILDREN_COUNT_GET, _children_count_cb, NULL));
- *    eo_do(model, emodel_children_count_get());
+ *    model = eo_add_custom(EIO_MODEL_CLASS, NULL, eio_model_constructor("/tmp"));
+ *    eo_do(model, eo_event_callback_add(EMODEL_EVENT_CHILDREN_COUNT_CHANGED, _children_count_cb, NULL));
+ *    eo_do(model, emodel_children_count_get(&total));
+ *    fprintf(stdout, "total=%lu\n", total);
  *
  *    ecore_main_loop_begin();
  *    eo_unref(model);
@@ -83,11 +84,10 @@
  *   @endcode
  *
  *   In previous example the concrete Emodel_Eio counts, asynchronously, the number of files in given directory,
- *   when it is ready _children_count_cb() is invoked receiving the number of files as event_info data.
- *
- * This is achieved by registering the Model in EMODEL_EVENT_CHILDREN_COUNT_GET and then asking Emodel's concrete
- * implementation (Emodel_Eio) to count the number of files. When it is finished it then dispatches the event providing
- * data along with it.
+ *   emodel_children_count_get() returns into 'total' pointer the last known number of children. In the meantime
+ *   when background count is finished _children_count_cb() is invoked receiving the number of files as event_info data.
+ *   This is achieved by registering the Model as EMODEL_EVENT_CHILDREN_COUNT_CHANGED event listener and every time
+ *   the count (number of children) changes, the event is disptached to listeners.
  *
  *   The principles may remain the same for different events and the logic remains.
  *

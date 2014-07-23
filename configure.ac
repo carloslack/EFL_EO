@@ -3767,7 +3767,9 @@ fi
 
 #### Emodel
 EFL_LIB_START([Emodel])
-EFL_ADD_LIBS([EMODEL], [-lm])
+EFL_ADD_LIBS([EMODEL], [])
+EFL_INTERNAL_DEPEND_PKG([EMODEL], [eo])
+EFL_INTERNAL_DEPEND_PKG([EMODEL], [eina])
 EFL_LIB_END([Emodel])
 #### End of Emodel
 
@@ -3987,7 +3989,6 @@ EFL_INTERNAL_DEPEND_PKG([EDJE], [ecore-imf])
 EFL_INTERNAL_DEPEND_PKG([EDJE], [ecore-imf-evas])
 EFL_INTERNAL_DEPEND_PKG([EDJE], [embryo])
 EFL_INTERNAL_DEPEND_PKG([EDJE], [eio])
-EFL_INTERNAL_DEPEND_PKG([EDJE], [emodel])
 
 EFL_OPTIONAL_INTERNAL_DEPEND_PKG([EDJE], [${want_physics}], [ephysics])
 EFL_OPTIONAL_INTERNAL_DEPEND_PKG([EDJE], [${want_multisense}], [ecore-audio])
