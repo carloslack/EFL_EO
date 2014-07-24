@@ -196,8 +196,6 @@ interface Emodel ()
               of a internal keeping. When the child is effectively
               added the event EMODEL_EVENT_CHILD_ADD is then raised and the new child
               is kept along with other children.
-              If the new child is dummy its load_status is EMODEL_LOAD_STATUS_FETCHING otherwise
-              EMODEL_LOAD_STATUS_FETCHED.
 
               @see EMODEL_EVENT_CHILD_ADD
               @see load_status_get
