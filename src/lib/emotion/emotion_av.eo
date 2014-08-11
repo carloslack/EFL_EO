@@ -10,17 +10,17 @@ class Emotion.AV (Eo.Base)
         }
         position_set {
             params {
-                double position;
+               @in double position;
             }
         }
         volume_set {
             params {
-                double volume;
+               @in double volume;
             }
         }
         play_set {
             params {
-                Eina_Bool play;
+               @in Eina_Bool play;
             }
         }
     }
