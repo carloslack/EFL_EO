@@ -637,6 +637,18 @@ START_TEST(evas_textblock_cursor)
 
         evas_textblock_cursor_word_end(cur);
         ck_assert_int_eq(5, evas_textblock_cursor_pos_get(cur));
+
+        /* moving across paragraphs */
+        evas_object_textblock_text_markup_set(tb,
+                                              "test<ps/>"
+                                              "  case");
+        evas_textblock_cursor_pos_set(cur, 4);
+        evas_textblock_cursor_word_end(cur);
+        ck_assert_int_eq(10, evas_textblock_cursor_pos_get(cur));
+
+        evas_textblock_cursor_pos_set(cur, 6);
+        evas_textblock_cursor_word_start(cur);
+        ck_assert_int_eq(0, evas_textblock_cursor_pos_get(cur));
      }
 
    /* Make sure coords are correct for ligatures */
@@ -2650,6 +2662,11 @@ START_TEST(evas_textblock_style)
    evas_object_textblock_size_formatted_get(tb, &nw, &nh);
    fail_if((w >= nw) || (h >= nh));
 
+   /* Style tag test */
+   buf = "Test <br><br/><ps><ps/><tab><tab/>";
+   evas_object_textblock_text_markup_set(tb, buf);
+   fail_if(strcmp(buf, evas_object_textblock_text_markup_get(tb)));
+
    /* Style padding. */
    evas_object_textblock_text_markup_set(tb, "Test");
    evas_object_textblock_style_insets_get(tb, &l, &r, &t, &b);
@@ -2880,6 +2897,18 @@ START_TEST(evas_textblock_size)
    evas_object_textblock_size_native_get(tb, &nw, &nh);
    fail_if((w != nw) || (h != nh));
    fail_if(w <= 0);
+
+   evas_object_textblock_text_markup_set(tb, "i<b>。</b>");
+   evas_object_textblock_size_formatted_get(tb, &w, &h);
+   evas_object_textblock_size_native_get(tb, &nw, &nh);
+   ck_assert_int_eq(w, nw);
+   ck_assert_int_eq(h, nh);
+
+   evas_object_textblock_text_markup_set(tb, "。<b>i</b>");
+   evas_object_textblock_size_formatted_get(tb, &w, &h);
+   evas_object_textblock_size_native_get(tb, &nw, &nh);
+   ck_assert_int_eq(w, nw);
+   ck_assert_int_eq(h, nh);
 
    /* This time with margins. */
      {

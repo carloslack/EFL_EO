@@ -6,26 +6,31 @@ void
 database_type_del(Eolian_Type *tp)
 {
    if (!tp) return;
-   if (tp->type == EOLIAN_TYPE_POINTER || tp->type == EOLIAN_TYPE_FUNCTION)
-     {
-        Eolian_Type *stp;
-        if (tp->subtypes) EINA_LIST_FREE(tp->subtypes, stp)
-          database_type_del(stp);
-        if (tp->base_type)
-          database_type_del(tp->base_type);
-     }
-   else
-     {
-        const char *sp;
-        if (tp->name) eina_stringshare_del(tp->name);
-        if (tp->full_name) eina_stringshare_del(tp->full_name);
-        if (tp->fields) eina_hash_free(tp->fields);
-        if (tp->namespaces) EINA_LIST_FREE(tp->namespaces, sp)
-           eina_stringshare_del(sp);
-        if (tp->comment) eina_stringshare_del(tp->comment);
-        if (tp->file) eina_stringshare_del(tp->file);
-     }
+   const char *sp;
+   Eolian_Type *stp;
+   if (tp->subtypes) EINA_LIST_FREE(tp->subtypes, stp)
+     database_type_del(stp);
+   if (tp->base_type)
+     database_type_del(tp->base_type);
+   if (tp->name) eina_stringshare_del(tp->name);
+   if (tp->full_name) eina_stringshare_del(tp->full_name);
+   if (tp->fields) eina_hash_free(tp->fields);
+   if (tp->namespaces) EINA_LIST_FREE(tp->namespaces, sp)
+      eina_stringshare_del(sp);
+   if (tp->comment) eina_stringshare_del(tp->comment);
+   if (tp->file) eina_stringshare_del(tp->file);
    free(tp);
+}
+
+void
+database_typedef_del(Eolian_Type *tp)
+{
+   if (!tp) return;
+   Eolian_Type *btp = tp->base_type;
+   /* prevent deletion of named structs as they're deleted later on */
+   if (btp && btp->type == EOLIAN_TYPE_STRUCT && btp->name)
+     tp->base_type = NULL;
+   database_type_del(tp);
 }
 
 Eina_Bool
@@ -33,6 +38,8 @@ database_type_add(Eolian_Type *def)
 {
    if (!_aliases) return EINA_FALSE;
    eina_hash_set(_aliases, def->full_name, def);
+   eina_hash_set(_aliasesf, def->file, eina_list_append
+                ((Eina_List*)eina_hash_find(_aliasesf, def->file), def));
    return EINA_TRUE;
 }
 
@@ -40,6 +47,8 @@ Eina_Bool database_struct_add(Eolian_Type *tp)
 {
    if (!_structs) return EINA_FALSE;
    eina_hash_set(_structs, tp->full_name, tp);
+   eina_hash_set(_structsf, tp->file, eina_list_append
+                ((Eina_List*)eina_hash_find(_structsf, tp->file), tp));
    return EINA_TRUE;
 }
 
@@ -100,10 +109,35 @@ _stype_to_str(const Eolian_Type *tp, Eina_Strbuf *buf, const char *name)
      }
 }
 
+static void
+_atype_to_str(const Eolian_Type *tp, Eina_Strbuf *buf)
+{
+   Eina_Strbuf *fulln = eina_strbuf_new();
+   Eina_List *l;
+   const char *sp;
+
+   eina_strbuf_append(buf, "typedef ");
+
+   EINA_LIST_FOREACH(tp->namespaces, l, sp)
+     {
+        eina_strbuf_append(fulln, sp);
+        eina_strbuf_append_char(fulln, '_');
+     }
+   eina_strbuf_append(fulln, tp->name);
+
+   database_type_to_str(tp->base_type, buf, eina_strbuf_string_get(fulln));
+   eina_strbuf_free(fulln);
+}
+
 void
 database_type_to_str(const Eolian_Type *tp, Eina_Strbuf *buf, const char *name)
 {
-   if (tp->type == EOLIAN_TYPE_FUNCTION)
+   if (tp->type == EOLIAN_TYPE_ALIAS)
+     {
+        _atype_to_str(tp, buf);
+        return;
+     }
+   else if (tp->type == EOLIAN_TYPE_FUNCTION)
      {
         _ftype_to_str(tp, buf, name);
         return;
@@ -164,21 +198,33 @@ _print_field(const Eina_Hash *hash EINA_UNUSED, const void *key, void *data,
    return EINA_TRUE;
 }
 
+static void
+_typedef_print(Eolian_Type *tp)
+{
+   printf("type %s: ", tp->full_name);
+   database_type_print(tp->base_type);
+}
+
 void
 database_type_print(Eolian_Type *tp)
 {
    Eina_List *l;
    Eolian_Type *stp;
+   if (tp->type == EOLIAN_TYPE_ALIAS)
+     {
+        _typedef_print(tp);
+        return;
+     }
    if (tp->is_own)
      printf("own(");
    if (tp->is_const)
      printf("const(");
    if (tp->type == EOLIAN_TYPE_REGULAR)
-     printf("%s", tp->name);
+     printf("%s", tp->full_name);
    else if (tp->type == EOLIAN_TYPE_VOID)
      printf("void");
    else if (tp->type == EOLIAN_TYPE_REGULAR_STRUCT)
-     printf("struct %s", tp->name);
+     printf("struct %s", tp->full_name);
    else if (tp->type == EOLIAN_TYPE_POINTER)
      {
         database_type_print(tp->base_type);

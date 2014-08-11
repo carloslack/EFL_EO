@@ -5,6 +5,7 @@
 #include "Ecore.h"
 #include "ecore_x_private.h"
 #include "Ecore_X.h"
+#include "Ecore_Con.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -13,16 +14,22 @@
 #include <dlfcn.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 #include <fcntl.h>
 
-#define ECORE_X_VSYNC_DRI2 1
+#define ECORE_X_VSYNC_DRM 1
 
-#ifdef ECORE_X_VSYNC_DRI2
+static Ecore_X_Window vsync_root = 0;
+
+int _ecore_x_image_shm_check(void);
+
+
+
+
+#ifdef ECORE_X_VSYNC_DRM
 // relevant header bits of dri/drm inlined here to avoid needing external
 // headers to build
 /// drm
-typedef unsigned int drm_magic_t;
-
 typedef enum
 {
    DRM_VBLANK_ABSOLUTE = 0x00000000,
@@ -74,54 +81,35 @@ typedef struct _drmEventContext
 } drmEventContext;
 
 static int (*sym_drmClose)(int fd) = NULL;
-static int (*sym_drmGetMagic)(int fd,
-                              drm_magic_t *magic) = NULL;
 static int (*sym_drmWaitVBlank)(int fd,
                                 drmVBlank *vbl) = NULL;
 static int (*sym_drmHandleEvent)(int fd,
                                  drmEventContext *evctx) = NULL;
-
-//// dri
-
-static Bool (*sym_DRI2QueryExtension)(Display *display,
-                                      int *eventBase,
-                                      int *errorBase) = NULL;
-static Bool (*sym_DRI2QueryVersion)(Display *display,
-                                    int *major,
-                                    int *minor) = NULL;
-static Bool (*sym_DRI2Connect)(Display *display,
-                               XID window,
-                               char **driverName,
-                               char **deviceName) = NULL;
-static Bool (*sym_DRI2Authenticate)(Display *display,
-                                    XID window,
-                                    drm_magic_t magic) = NULL;
-
-//// dri/drm data needed
-static int dri2_event = 0;
-static int dri2_error = 0;
-static int dri2_major = 0;
-static int dri2_minor = 0;
-static char *device_name = 0;
-static char *driver_name = 0;
-static drm_magic_t drm_magic;
-
 static int drm_fd = -1;
-static int drm_event_is_busy = 0;
+static volatile int drm_event_is_busy = 0;
 static int drm_animators_interval = 1;
 static drmEventContext drm_evctx;
-static Ecore_Fd_Handler *dri_drm_fdh = NULL;
+static double _drm_fail_time = 0.1;
+static double _drm_fail_time2 = 1.0 / 60.0;
+static int _drm_fail_count = 0;
 
-static void *dri_lib = NULL;
 static void *drm_lib = NULL;
 
-static Window dri_drm_vsync_root = 0;
+static Eina_Thread_Queue *thq = NULL;
+static Ecore_Thread *drm_thread = NULL;
+typedef struct
+{
+   Eina_Thread_Queue_Msg head;
+   char val;
+} Msg;
+
 
 static Eina_Bool
-_dri_drm_tick_schedule(void)
+_drm_tick_schedule(void)
 {
    drmVBlank vbl;
 
+   DBG("sched...\n");
    vbl.request.type = DRM_VBLANK_RELATIVE | DRM_VBLANK_EVENT;
    vbl.request.sequence = drm_animators_interval;
    vbl.request.signal = 0;
@@ -130,38 +118,157 @@ _dri_drm_tick_schedule(void)
 }
 
 static void
-_dri_drm_tick_begin(void *data EINA_UNUSED)
+_tick_send(char val)
 {
+   Msg *msg;
+   void *ref;
+   DBG("_tick_send(%i)\n", val);
+   msg = eina_thread_queue_send(thq, sizeof(Msg), &ref);
+   msg->val = val;
+   eina_thread_queue_send_done(thq, ref);
+}
+
+static void
+_drm_tick_begin(void *data EINA_UNUSED)
+{
+   _drm_fail_count = 0;
    drm_event_is_busy = 1;
-   _dri_drm_tick_schedule();
+   _tick_send(1);
 }
 
 static void
-_dri_drm_tick_end(void *data EINA_UNUSED)
+_drm_tick_end(void *data EINA_UNUSED)
 {
+   _drm_fail_count = 0;
    drm_event_is_busy = 0;
+   _tick_send(0);
 }
 
 static void
-_dri_drm_vblank_handler(int fd EINA_UNUSED,
-                        unsigned int frame EINA_UNUSED,
-                        unsigned int sec EINA_UNUSED,
-                        unsigned int usec EINA_UNUSED,
-                        void *data EINA_UNUSED)
+_drm_send_time(double t)
 {
-   if (drm_event_is_busy)
+   double *tim = malloc(sizeof(*tim));
+   if (tim)
      {
-        ecore_animator_custom_tick();
-        _dri_drm_tick_schedule();
+        *tim = t;
+        DBG("   ... send %1.8f\n", t);
+        ecore_thread_feedback(drm_thread, tim);
      }
 }
 
-static Eina_Bool
-_dri_drm_cb(void *data EINA_UNUSED,
-            Ecore_Fd_Handler *fd_handler EINA_UNUSED)
+static void
+_drm_vblank_handler(int fd EINA_UNUSED,
+                    unsigned int frame,
+                    unsigned int sec,
+                    unsigned int usec,
+                    void *data EINA_UNUSED)
 {
-   sym_drmHandleEvent(drm_fd, &drm_evctx);
-   return ECORE_CALLBACK_RENEW;
+   if (drm_event_is_busy)
+     {
+        static unsigned int pframe = 0;
+
+        DBG("vblank %i\n", frame);
+        if (pframe != frame)
+          {
+             _drm_send_time((double)sec + ((double)usec / 1000000));
+             _drm_tick_schedule();
+             pframe = frame;
+          }
+     }
+}
+
+static void
+_drm_tick_core(void *data EINA_UNUSED, Ecore_Thread *thread EINA_UNUSED)
+{
+   Msg *msg;
+   void *ref;
+   int tick = 0;
+
+   for (;;)
+     {
+        DBG("------- drm_event_is_busy=%i\n", drm_event_is_busy);
+        if (!drm_event_is_busy)
+          {
+             DBG("wait...\n");
+             msg = eina_thread_queue_wait(thq, &ref);
+             if (msg)
+               {
+                  tick = msg->val;
+                  eina_thread_queue_wait_done(thq, ref);
+               }
+          }
+        else
+          {
+             do
+               {
+                  DBG("poll...\n");
+                  msg = eina_thread_queue_poll(thq, &ref);
+                  if (msg)
+                    {
+                       tick = msg->val;
+                       eina_thread_queue_wait_done(thq, ref);
+                    }
+               }
+             while (msg);
+          }
+        DBG("tick = %i\n", tick);
+        if (tick == -1)
+          {
+             drm_thread = NULL;
+             eina_thread_queue_free(thq);
+             thq = NULL;
+             return;
+          }
+        else if (tick)
+          {
+             fd_set rfds, wfds, exfds;
+             int max_fd;
+             int ret;
+             struct timeval tv;
+
+             _drm_tick_schedule();
+             max_fd = 0;
+             FD_ZERO(&rfds);
+             FD_ZERO(&wfds);
+             FD_ZERO(&exfds);
+             FD_SET(drm_fd, &rfds);
+             max_fd = drm_fd;
+             tv.tv_sec = 0;
+             if (_drm_fail_count >= 10)
+               tv.tv_usec = _drm_fail_time2 * 1000000;
+             else
+               tv.tv_usec = _drm_fail_time * 1000000;
+             ret = select(max_fd + 1, &rfds, &wfds, &exfds, &tv);
+             if ((ret == 1) && (FD_ISSET(drm_fd, &rfds)))
+               {
+                  sym_drmHandleEvent(drm_fd, &drm_evctx);
+                  _drm_fail_count = 0;
+               }
+             else if (ret == 0)
+               {
+                  // timeout
+                  _drm_send_time(ecore_time_get());
+                  _drm_fail_count++;
+               }
+          }
+     }
+}
+
+static void
+_drm_tick_notify(void *data EINA_UNUSED, Ecore_Thread *thread EINA_UNUSED, void *msg)
+{
+   DBG("notify.... %3.3f %i\n", *((double *)msg), drm_event_is_busy);
+   if (drm_event_is_busy)
+     {
+        double *t = msg;
+        static double pt = 0.0;
+
+        DBG("VSYNC %1.8f = delt %1.8f\n", *t, *t - pt);
+        ecore_loop_time_set(*t);
+        ecore_animator_custom_tick();
+        pt = *t;
+     }
+   free(msg);
 }
 
 // yes. most evil. we dlopen libdrm and libGL etc. to manually find smbols
@@ -169,7 +276,7 @@ _dri_drm_cb(void *data EINA_UNUSED,
 // gl/dri/drm etc. world. and handle graceful failure at runtime not
 // compile time
 static int
-_dri_drm_link(void)
+_drm_link(void)
 {
    const char *drm_libs[] =
    {
@@ -179,31 +286,16 @@ _dri_drm_link(void)
       "libdrm.so",
       NULL,
    };
-   const char *dri_libs[] =
-   {
-      "libdri2.so.2",
-      "libdri2.so.1",
-      "libdri2.so.0",
-      "libdri2.so",
-      "libGL.so.4",
-      "libGL.so.3",
-      "libGL.so.2",
-      "libGL.so.1",
-      "libGL.so.0",
-      "libGL.so",
-      NULL,
-   };
    int i, fail;
-#define SYM(lib, xx)                            \
-  do {                                          \
-       sym_ ## xx = dlsym(lib, #xx);            \
-       if (!(sym_ ## xx)) {                     \
-            fprintf(stderr, "%s\n", dlerror()); \
-            fail = 1;                           \
-         }                                      \
-    } while (0)
+#define SYM(lib, xx)                         \
+   do {                                      \
+      sym_ ## xx = dlsym(lib, #xx);          \
+      if (!(sym_ ## xx)) {                   \
+         fail = 1;                           \
+      }                                      \
+   } while (0)
 
-   if (dri_lib) return 1;
+   if (drm_lib) return 1;
    for (i = 0; drm_libs[i]; i++)
      {
         drm_lib = dlopen(drm_libs[i], RTLD_LOCAL | RTLD_LAZY);
@@ -222,141 +314,297 @@ _dri_drm_link(void)
           }
      }
    if (!drm_lib) return 0;
-   for (i = 0; dri_libs[i]; i++)
-     {
-        dri_lib = dlopen(dri_libs[i], RTLD_LOCAL | RTLD_LAZY);
-        if (dri_lib)
-          {
-             fail = 0;
-             SYM(dri_lib, DRI2QueryExtension);
-             SYM(dri_lib, DRI2QueryVersion);
-             SYM(dri_lib, DRI2Connect);
-             SYM(dri_lib, DRI2Authenticate);
-             if (fail)
-               {
-                  dlclose(dri_lib);
-                  dri_lib = NULL;
-               }
-             else break;
-          }
-     }
-   if (!dri_lib)
-     {
-        dlclose(drm_lib);
-        drm_lib = NULL;
-        return 0;
-     }
    return 1;
 }
 
 static int
-_dri_drm_init(void)
+_drm_init(void)
 {
-   if (!sym_DRI2QueryExtension(_ecore_x_disp, &dri2_event, &dri2_error))
-     return 0;
-   if (!sym_DRI2QueryVersion(_ecore_x_disp, &dri2_major, &dri2_minor))
-     return 0;
-   if (dri2_major < 2)
-     return 0;
-   if (!sym_DRI2Connect(_ecore_x_disp, dri_drm_vsync_root, &driver_name, &device_name))
-     return 0;
-   drm_fd = open(device_name, O_RDWR);
-   if (drm_fd < 0)
-     return 0;
-   sym_drmGetMagic(drm_fd, &drm_magic);
-   if (!sym_DRI2Authenticate(_ecore_x_disp, dri_drm_vsync_root, drm_magic))
+   struct stat st;
+   char buf[512];
+
+   // vboxvideo 4.3.14 is crashing when calls drmWaitVBlank()
+   // https://www.virtualbox.org/ticket/13265
+   // also affects 4.3.12
+   if (stat("/sys/module/vboxvideo", &st) == 0)
      {
-        close(drm_fd);
-        drm_fd = -1;
+/*
+        FILE *fp = fopen("/sys/module/vboxvideo/version", "r");
+        if (fp)
+          {
+             if (fgets(buf, sizeof(buf), fp))
+               {
+                  if (eina_str_has_prefix(buf, "4.3.14"))
+                    {
+                       fclose(fp);
+                       return 0;
+                    }
+               }
+             fclose(fp);
+          }
+ */
         return 0;
      }
+
+   snprintf(buf, sizeof(buf), "/dev/dri/card1");
+   if (stat(buf, &st) == 0)
+     {
+        // XXX: 2 dri cards - ambiguous. unknown device for screen
+        return 0;
+     }
+   snprintf(buf, sizeof(buf), "/dev/dri/card0");
+   if (stat(buf, &st) != 0) return 0;
+   drm_fd = open(buf, O_RDWR);
+   if (drm_fd < 0) return 0;
    memset(&drm_evctx, 0, sizeof(drm_evctx));
    drm_evctx.version = DRM_EVENT_CONTEXT_VERSION;
-   drm_evctx.vblank_handler = _dri_drm_vblank_handler;
+   drm_evctx.vblank_handler = _drm_vblank_handler;
    drm_evctx.page_flip_handler = NULL;
 
-   if (!_dri_drm_tick_schedule())
+   if (!_drm_tick_schedule())
      {
         close(drm_fd);
         drm_fd = -1;
         return 0;
      }
-   
-   dri_drm_fdh = ecore_main_fd_handler_add(drm_fd, ECORE_FD_READ,
-                                           _dri_drm_cb, NULL, NULL, NULL);
-   if (!dri_drm_fdh)
-     {
-        close(drm_fd);
-        drm_fd = -1;
-        return 0;
-     }
+
+   thq = eina_thread_queue_new();
+   drm_thread = ecore_thread_feedback_run(_drm_tick_core, _drm_tick_notify,
+                                          NULL, NULL, NULL, EINA_TRUE);
    return 1;
 }
 
-static void
-_dri_drm_shutdown(void)
+static Eina_Bool
+_drm_animator_tick_source_set(void)
 {
-   if (drm_fd >= 0)
+   if (vsync_root)
      {
-        close(drm_fd);
-        drm_fd = -1;
+        ecore_animator_custom_source_tick_begin_callback_set
+          (_drm_tick_begin, NULL);
+        ecore_animator_custom_source_tick_end_callback_set
+          (_drm_tick_end, NULL);
+        ecore_animator_source_set(ECORE_ANIMATOR_SOURCE_CUSTOM);
      }
-   if (dri_drm_fdh)
+   else
      {
-        ecore_main_fd_handler_del(dri_drm_fdh);
-        dri_drm_fdh = NULL;
+        if (drm_fd >= 0)
+          {
+             _drm_tick_end(NULL);
+             ecore_animator_custom_source_tick_begin_callback_set
+               (NULL, NULL);
+             ecore_animator_custom_source_tick_end_callback_set
+               (NULL, NULL);
+             ecore_animator_source_set(ECORE_ANIMATOR_SOURCE_TIMER);
+          }
      }
+   return EINA_TRUE;
+}
+#endif
+
+
+
+
+
+
+
+
+
+static Ecore_Con_Server *vsync_server = NULL;
+static Eina_Bool handlers = EINA_FALSE;
+static Eina_Prefix *_prefix = NULL;
+
+static Eina_Bool
+vsync_server_add(void *data EINA_UNUSED, int type EINA_UNUSED, void *event)
+{
+   Ecore_Con_Event_Server_Add *ev = event;
+   if (ev->server != vsync_server) return EINA_TRUE;
+   return EINA_FALSE;
 }
 
+static Eina_Bool
+vsync_server_del(void *data EINA_UNUSED, int type EINA_UNUSED, void *event)
+{
+   Ecore_Con_Event_Server_Del *ev = event;
+   if (ev->server != vsync_server) return EINA_TRUE;
+   if (vsync_server)
+     {
+        ecore_con_server_del(vsync_server);
+        vsync_server = NULL;
+        ecore_animator_custom_source_tick_begin_callback_set(NULL, NULL);
+        ecore_animator_custom_source_tick_end_callback_set(NULL, NULL);
+        ecore_animator_source_set(ECORE_ANIMATOR_SOURCE_TIMER);
+     }
+   return EINA_FALSE;
+}
+
+static int ticking = 0;
+
+static Eina_Bool
+vsync_server_data(void *data EINA_UNUSED, int type EINA_UNUSED, void *event)
+{
+   Ecore_Con_Event_Server_Data *ev = event;
+   int i;
+   double t;
+   char *d;
+   if (ev->server != vsync_server) return EINA_TRUE;
+   d = ev->data;
+   if (ticking)
+     {
+        for (i = 0; i < ev->size - (int)(sizeof(double) - 1); i++)
+          {
+             memcpy(&t, &(d[i]), sizeof(double));
+             ecore_loop_time_set(t);
+             ecore_animator_custom_tick();
+          }
+     }
+   return EINA_FALSE;
+}
+
+static void
+vsync_tick_begin(void *data EINA_UNUSED)
+{
+   char val = 1;
+   ticking = val;
+   ecore_con_server_send(vsync_server, &val, 1);
+}
+
+static void
+vsync_tick_end(void *data EINA_UNUSED)
+{
+   char val = 0;
+   ticking = val;
+   ecore_con_server_send(vsync_server, &val, 1);
+}
+
+static Eina_Bool
+_glvsync_animator_tick_source_set(void)
+{
+   if (!vsync_server)
+     {
+        char buf[4096], run[4096], *disp, *s;
+        int tries = 0;
+
+        if (!handlers)
+          {
+             _prefix = eina_prefix_new(NULL, ecore_x_vsync_animator_tick_source_set,
+                                       "ECORE_X", "ecore_x", "checkme",
+                                       PACKAGE_BIN_DIR, PACKAGE_LIB_DIR,
+                                       PACKAGE_DATA_DIR, PACKAGE_DATA_DIR);
+             ecore_con_init();
+          }
+        disp = getenv("DISPLAY");
+        if (!disp) disp = ":0";
+        snprintf(buf, sizeof(buf), "ecore-x-vsync-%s", disp);
+        for (s = buf; *s; s++)
+          {
+             if (*s == ':') *s = '=';
+          }
+        vsync_server = ecore_con_server_connect(ECORE_CON_LOCAL_USER, buf, 1, NULL);
+        if (!vsync_server)
+          {
+             snprintf(run, sizeof(run), "%s/ecore_x/bin/%s/ecore_x_vsync",
+                      eina_prefix_lib_get(_prefix), MODULE_ARCH);
+             ecore_exe_run(run, NULL);
+          }
+        while (!vsync_server)
+          {
+             tries++;
+             if (tries > 50) return EINA_FALSE;
+             usleep(10000);
+             vsync_server = ecore_con_server_connect(ECORE_CON_LOCAL_USER, buf, 1, NULL);
+          }
+        if (!handlers)
+          {
+             ecore_event_handler_add(ECORE_CON_EVENT_SERVER_ADD, vsync_server_add, NULL);
+             ecore_event_handler_add(ECORE_CON_EVENT_SERVER_DEL, vsync_server_del, NULL);
+             ecore_event_handler_add(ECORE_CON_EVENT_SERVER_DATA, vsync_server_data, NULL);
+             handlers = EINA_FALSE;
+          }
+     }
+   if (vsync_root)
+     {
+        ecore_animator_custom_source_tick_begin_callback_set(vsync_tick_begin, NULL);
+        ecore_animator_custom_source_tick_end_callback_set(vsync_tick_end, NULL);
+        ecore_animator_source_set(ECORE_ANIMATOR_SOURCE_CUSTOM);
+     }
+   else
+     {
+        if (vsync_server)
+          {
+             ecore_con_server_del(vsync_server);
+             vsync_server = NULL;
+          }
+        ecore_animator_custom_source_tick_begin_callback_set(NULL, NULL);
+        ecore_animator_custom_source_tick_end_callback_set(NULL, NULL);
+        ecore_animator_source_set(ECORE_ANIMATOR_SOURCE_TIMER);
+     }
+   return EINA_TRUE;
+}
+
+// XXX: missing mode 3 == separate x connection with compiled in dri2 proto
+// handling ala mesa (taken from mesa likely)
+
+static int mode = 0;
+
+static void
+_vsync_init(void)
+{
+   static int done = 0;
+   struct stat stb;
+
+   if (done) return;
+
+   if (_ecore_x_image_shm_check())
+     {
+#ifdef ECORE_X_VSYNC_DRM
+        // preferred inline drm if possible
+        if (!stat("/dev/dri/card0", &stb))
+          {
+             if (_drm_link())
+               {
+                  if (_drm_init())
+                    {
+                       mode = 1;
+                    }
+               }
+          }
 #endif
+        // nvidia gl vsync slave mode
+        if (mode == 0)
+          {
+             if (!stat("/dev/nvidiactl", &stb))
+               {
+                  mode = 2;
+               }
+          }
+     }
+   done = 1;
+}
 
 EAPI Eina_Bool
 ecore_x_vsync_animator_tick_source_set(Ecore_X_Window win)
 {
-#ifdef ECORE_X_VSYNC_DRI2
    Ecore_X_Window root;
+   static int vsync_veto = -1;
+
+   if (vsync_veto == -1)
+     {
+        if (getenv("ECORE_NO_VSYNC")) vsync_veto = 1;
+        else vsync_veto = 0;
+     }
+   if (vsync_veto == 1) return EINA_FALSE;
 
    root = ecore_x_window_root_get(win);
-   if (root != dri_drm_vsync_root)
+   if (root != vsync_root)
      {
-        dri_drm_vsync_root = root;
-        if (dri_drm_vsync_root)
-          {
-             if (!_dri_drm_link())
-               {
-                  ecore_animator_source_set(ECORE_ANIMATOR_SOURCE_TIMER);
-                  return EINA_FALSE;
-               }
-             _dri_drm_shutdown();
-             if (!_dri_drm_init())
-               {
-                  dri_drm_vsync_root = 0;
-                  ecore_animator_source_set(ECORE_ANIMATOR_SOURCE_TIMER);
-                  return EINA_FALSE;
-               }
-             ecore_animator_custom_source_tick_begin_callback_set
-               (_dri_drm_tick_begin, NULL);
-             ecore_animator_custom_source_tick_end_callback_set
-               (_dri_drm_tick_end, NULL);
-             ecore_animator_source_set(ECORE_ANIMATOR_SOURCE_CUSTOM);
-          }
+        _vsync_init();
+        vsync_root = root;
+#ifdef ECORE_X_VSYNC_DRM
+        if (mode == 1) return _drm_animator_tick_source_set();
         else
-          {
-             if (drm_fd >= 0)
-               {
-                  _dri_drm_shutdown();
-                  ecore_animator_custom_source_tick_begin_callback_set
-                    (NULL, NULL);
-                  ecore_animator_custom_source_tick_end_callback_set
-                    (NULL, NULL);
-                  ecore_animator_source_set(ECORE_ANIMATOR_SOURCE_TIMER);
-               }
-          }
+#endif
+        if (mode == 2) return _glvsync_animator_tick_source_set();
+        else return EINA_FALSE;
      }
    return EINA_TRUE;
-#else
-   return EINA_FALSE;
-   win = 0;
-#endif
 }
-

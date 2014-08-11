@@ -11,6 +11,7 @@
 
 static int sym_done = 0;
 int _evas_engine_GL_common_log_dom = -1;
+Cutout_Rects *_evas_gl_common_cutout_rects = NULL;
 
 typedef void       (*glsym_func_void) ();
 typedef void      *(*glsym_func_void_ptr) ();
@@ -38,8 +39,6 @@ typedef _eng_fn (*glsym_func_eng_fn) ();
 typedef unsigned int  (*secsym_func_uint) ();
 typedef void         *(*secsym_func_void_ptr) ();
 
-static _eng_fn  (*glsym_eglGetProcAddress)            (const char *a) = NULL;
-
 void          *(*secsym_eglCreateImage)               (void *a, void *b, GLenum c, void *d, const int *e) = NULL;
 unsigned int   (*secsym_eglDestroyImage)              (void *a, void *b) = NULL;
 void           (*secsym_glEGLImageTargetTexture2DOES) (int a, void *b) = NULL;
@@ -50,7 +49,6 @@ unsigned int   (*secsym_eglGetImageAttribSEC)         (void *a, void *b, int c, 
 typedef void (*_eng_fn) (void);
 
 typedef _eng_fn (*glsym_func_eng_fn) ();
-static _eng_fn  (*glsym_glXGetProcAddress)  (const char *a) = NULL;
 #endif
 
 static int dbgflushnum = -1;
@@ -61,38 +59,18 @@ sym_missing(void)
    ERR("GL symbols missing!");
 }
 
-static void
-gl_symbols(void)
+EAPI void
+evas_gl_symbols(void *(*GetProcAddress)(const char *name))
 {
    if (sym_done) return;
    sym_done = 1;
 
-   /* FIXME: If using the SDL engine, we should use SDL_GL_GetProcAddress
-    * instead of dlsym
-    * if (!dst) dst = (typ)SDL_GL_GetProcAddress(sym)
-    */
-#ifdef GL_GLES
 #define FINDSYM(dst, sym, typ) \
-   if (glsym_eglGetProcAddress) { \
-      if (!dst) dst = (typ)glsym_eglGetProcAddress(sym); \
+   if (GetProcAddress) { \
+      if (!dst) dst = (typ)GetProcAddress(sym); \
    } else { \
       if (!dst) dst = (typ)dlsym(RTLD_DEFAULT, sym); \
    }
-   FINDSYM(glsym_eglGetProcAddress, "eglGetProcAddressKHR", glsym_func_eng_fn);
-   FINDSYM(glsym_eglGetProcAddress, "eglGetProcAddressEXT", glsym_func_eng_fn);
-   FINDSYM(glsym_eglGetProcAddress, "eglGetProcAddressARB", glsym_func_eng_fn);
-   FINDSYM(glsym_eglGetProcAddress, "eglGetProcAddress", glsym_func_eng_fn);
-#else
-#define FINDSYM(dst, sym, typ) \
-   if (glsym_glXGetProcAddress) { \
-      if (!dst) dst = (typ)glsym_glXGetProcAddress(sym); \
-   } else { \
-      if (!dst) dst = (typ)dlsym(RTLD_DEFAULT, sym); \
-   }
-   FINDSYM(glsym_glXGetProcAddress, "glXGetProcAddressEXT", glsym_func_eng_fn);
-   FINDSYM(glsym_glXGetProcAddress, "glXGetProcAddressARB", glsym_func_eng_fn);
-   FINDSYM(glsym_glXGetProcAddress, "glXGetProcAddress", glsym_func_eng_fn);
-#endif
 #define FINDSYM2(dst, sym, typ) if (!dst) dst = (typ)dlsym(RTLD_DEFAULT, sym)
 #define FALLBAK(dst, typ) if (!dst) dst = (typ)sym_missing
 
@@ -565,8 +543,6 @@ evas_gl_common_context_new(void)
    gc = calloc(1, sizeof(Evas_Engine_GL_Context));
    if (!gc) return NULL;
 
-   gl_symbols();
-
    gc->references = 1;
 
    _evas_gl_common_context = gc;
@@ -942,7 +918,7 @@ evas_gl_common_context_free(Evas_Engine_GL_Context *gc)
              evas_gl_common_image_free(gc->shared->images->data);
           }
 
-        for (j = 0; j < 6; j++)
+        for (j = 0; j < ATLAS_FORMATS_COUNT; j++)
           {
               EINA_LIST_FOREACH(gc->shared->tex.atlas[j], l, pt)
                  evas_gl_texture_pool_empty(pt);
@@ -959,6 +935,11 @@ evas_gl_common_context_free(Evas_Engine_GL_Context *gc)
      }
    if (gc == _evas_gl_common_context) _evas_gl_common_context = NULL;
    free(gc);
+   if (_evas_gl_common_cutout_rects)
+     {
+        evas_common_draw_context_apply_clear_cutouts(_evas_gl_common_cutout_rects);
+        _evas_gl_common_cutout_rects = NULL;
+     }
 }
 
 EAPI void
@@ -974,6 +955,11 @@ evas_gl_common_context_newframe(Evas_Engine_GL_Context *gc)
 {
    int i;
 
+   if (_evas_gl_common_cutout_rects)
+     {
+        evas_common_draw_context_apply_clear_cutouts(_evas_gl_common_cutout_rects);
+        _evas_gl_common_cutout_rects = NULL;
+     }
    if (dbgflushnum < 0)
      {
         dbgflushnum = 0;
@@ -3356,7 +3342,6 @@ finish:
    if (ok) return 1;
    else return 0;
 }
-
 
 Eina_Bool
 evas_gl_common_module_open(void)

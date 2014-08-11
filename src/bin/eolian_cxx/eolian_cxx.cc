@@ -94,10 +94,10 @@ generator_options(const Eolian_Class& klass)
    gen_opts.c_headers.push_back(class_base_file(klass) + ".h");
 
    void *cur = NULL;
-   const Eina_List *itr, *inheritances = ::eolian_class_inherits_list_get(&klass);
-   EINA_LIST_FOREACH(inheritances, itr, cur)
+   Eina_Iterator *inheritances = ::eolian_class_inherits_get(&klass);
+   EINA_ITERATOR_FOREACH(inheritances, cur)
      {
-        const Eolian_Class *ext = ::eolian_class_find_by_name(static_cast<const char*>(cur));
+        const Eolian_Class *ext = ::eolian_class_get_by_name(static_cast<const char*>(cur));
         std::string eo_parent_file = class_base_file(*ext);
         if (!eo_parent_file.empty())
           {
@@ -117,6 +117,7 @@ generator_options(const Eolian_Class& klass)
                << std::endl;
           }
      }
+   eina_iterator_free(inheritances);
    return gen_opts;
 }
 
@@ -212,7 +213,7 @@ database_load(options_type const& opts)
              assert(false && "Error parsing input file");
           }
      }
-   if (!::eolian_all_eo_files_parse())
+   else if (!::eolian_all_eo_files_parse())
      {
         EINA_CXX_DOM_LOG_ERR(eolian_cxx::domain)
           << "Eolian failed parsing input files";

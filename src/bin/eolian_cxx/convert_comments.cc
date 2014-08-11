@@ -27,16 +27,16 @@ _comment_parameter(Eolian_Function_Parameter *param)
 }
 
 static std::string
-_comment_parameters_list(const Eina_List *params)
+_comment_parameters_list(Eina_Iterator *params)
 {
    std::string doc = "";
-   const Eina_List *it;
    void *curr;
-   EINA_LIST_FOREACH (params, it, curr)
+   EINA_ITERATOR_FOREACH(params, curr)
      {
         doc += _comment_parameter
           (static_cast<Eolian_Function_Parameter*>(curr)) + "\n";
      }
+   eina_iterator_free(params);
    return doc;
 }
 
@@ -50,7 +50,7 @@ _comment_brief_and_params(Eolian_Function const& function,
      {
         doc += "@brief " + func + "\n\n";
      }
-   std::string params = _comment_parameters_list(::eolian_parameters_list_get(&function));
+   std::string params = _comment_parameters_list(::eolian_function_parameters_get(&function));
    if (params != "")
      {
         doc += params + "\n";

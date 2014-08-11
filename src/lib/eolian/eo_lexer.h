@@ -18,15 +18,16 @@ enum Tokens
 
 /* all keywords in eolian, they can still be used as names (they're TOK_VALUE)
  * they just fill in the "kw" field of the token */
-#define KEYWORDS KW(class), KW(const), KW(private), KW(protected), \
-    KW(return), KW(signed), KW(struct), KW(unsigned), KW(virtual), \
+#define KEYWORDS KW(class), KW(const), KW(private), KW(return), KW(struct), \
+    KW(virtual), \
     \
     KW(abstract), KW(constructor), KW(constructors), KW(data), \
     KW(destructor), KW(eo_prefix), KW(events), KW(func), KW(get), \
     KW(implements), KW(interface), KW(keys), KW(legacy), KW(legacy_prefix), \
     KW(methods), KW(mixin), KW(own), KW(params), KW(properties), KW(set), \
-    KW(type), KW(values), KWAT(extern), KWAT(in), KWAT(inout), KWAT(nonull), \
-    KWAT(out), KWAT(warn_unused), \
+    KW(type), KW(values), KWAT(class), KWAT(const), KWAT(constructor), \
+    KWAT(extern), KWAT(in), KWAT(inout), KWAT(nonull), KWAT(out), \
+    KWAT(protected), KWAT(warn_unused), \
     \
     KW(byte), KW(ubyte), KW(char), KW(short), KW(ushort), KW(int), KW(uint), \
     KW(long), KW(ulong), KW(llong), KW(ullong), \
@@ -110,6 +111,12 @@ typedef struct _Eo_Node
    };
 } Eo_Node;
 
+typedef struct _Lexer_Ctx
+{
+   int line, column;
+   const char *linestr;
+} Lexer_Ctx;
+
 /* keeps all lexer state */
 typedef struct _Eo_Lexer
 {
@@ -147,6 +154,9 @@ typedef struct _Eo_Lexer
    /* this is jumped to when an error happens */
    jmp_buf      err_jmp;
 
+   /* saved context info */
+   Eina_List *saved_ctxs;
+
    /* represents the results of parsing */
    Eina_List      *nodes;
    /* represents the temporaries, every object that is allocated by the
@@ -180,6 +190,11 @@ const char *eo_lexer_keyword_str_get(int kw);
 Eina_Bool   eo_lexer_is_type_keyword(int kw);
 /* gets the C type name for a builtin type name - e.g. uchar -> unsigned char */
 const char *eo_lexer_get_c_type     (int kw);
+/* save, restore and clear context (line, column, line string) */
+void eo_lexer_context_push   (Eo_Lexer *ls);
+void eo_lexer_context_pop    (Eo_Lexer *ls);
+void eo_lexer_context_restore(Eo_Lexer *ls);
+void eo_lexer_context_clear  (Eo_Lexer *ls);
 
 extern int _eo_lexer_log_dom;
 #ifdef CRITICAL

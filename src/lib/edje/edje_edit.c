@@ -8109,6 +8109,8 @@ edje_edit_program_name_set(Evas_Object *obj, const char *prog, const char* new_n
 
    if (!new_name) return EINA_FALSE;
 
+   if (!strcmp(prog, new_name)) return EINA_TRUE;
+
    if (_edje_program_get_byname(obj, new_name)) return EINA_FALSE;
 
    //printf("SET NAME for program: %s [new name: %s]\n", prog, new_name);
@@ -9985,7 +9987,7 @@ _edje_generate_source_of_state(Evas_Object *obj, const char *part, const char *s
                BUF_APPENDF(I7"x: %g;\n", TO_DOUBLE(pd->map.rot.x));
              if (TO_DOUBLE(pd->map.rot.y) != 0.0)
                BUF_APPENDF(I7"y: %g;\n", TO_DOUBLE(pd->map.rot.y));
-             if (TO_DOUBLE(pd->map.rot.x) != 0.0)
+             if (TO_DOUBLE(pd->map.rot.z) != 0.0)
                BUF_APPENDF(I7"z: %g;\n", TO_DOUBLE(pd->map.rot.z));
 
              BUF_APPEND(I6"}\n");

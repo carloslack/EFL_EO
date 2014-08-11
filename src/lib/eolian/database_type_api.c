@@ -3,43 +3,45 @@
 #include "eo_definitions.h"
 
 EAPI const Eolian_Type *
-eolian_type_find_by_alias(const char *alias)
+eolian_type_alias_get_by_name(const char *name)
 {
    if (!_aliases) return NULL;
-   Eina_Stringshare *shr = eina_stringshare_add(alias);
-   Eolian_Type *def = eina_hash_find(_aliases, shr);
+   Eina_Stringshare *shr = eina_stringshare_add(name);
+   Eolian_Type *tp = eina_hash_find(_aliases, shr);
    eina_stringshare_del(shr);
-   return def ? def->base_type : NULL;
-}
-
-EAPI Eina_Bool
-eolian_typedef_is_extern(const char *alias)
-{
-   if (!_aliases) return EINA_FALSE;
-   Eina_Stringshare *shr = eina_stringshare_add(alias);
-   Eolian_Type *def = eina_hash_find(_aliases, shr);
-   eina_stringshare_del(shr);
-   return def ? def->is_extern : EINA_FALSE;
-}
-
-EAPI Eina_Stringshare *
-eolian_typedef_file_get(const char *alias)
-{
-   if (!_aliases) return EINA_FALSE;
-   Eina_Stringshare *shr = eina_stringshare_add(alias);
-   Eolian_Type *def = eina_hash_find(_aliases, shr);
-   eina_stringshare_del(shr);
-   return def ? eina_stringshare_ref(def->file) : NULL;
+   return tp;
 }
 
 EAPI const Eolian_Type *
-eolian_type_struct_find_by_name(const char *name)
+eolian_type_struct_get_by_name(const char *name)
 {
    if (!_structs) return NULL;
    Eina_Stringshare *shr = eina_stringshare_add(name);
    Eolian_Type *tp = eina_hash_find(_structs, shr);
    eina_stringshare_del(shr);
    return tp;
+}
+
+EAPI Eina_Iterator *
+eolian_type_aliases_get_by_file(const char *fname)
+{
+   if (!_aliasesf) return NULL;
+   Eina_Stringshare *shr = eina_stringshare_add(fname);
+   Eina_List *l = eina_hash_find(_aliasesf, shr);
+   eina_stringshare_del(shr);
+   if (!l) return NULL;
+   return eina_list_iterator_new(l);
+}
+
+EAPI Eina_Iterator *
+eolian_type_structs_get_by_file(const char *fname)
+{
+   if (!_structsf) return NULL;
+   Eina_Stringshare *shr = eina_stringshare_add(fname);
+   Eina_List *l = eina_hash_find(_structsf, shr);
+   eina_stringshare_del(shr);
+   if (!l) return NULL;
+   return eina_list_iterator_new(l);
 }
 
 EAPI Eolian_Type_Type
@@ -50,7 +52,7 @@ eolian_type_type_get(const Eolian_Type *tp)
 }
 
 EAPI Eina_Iterator *
-eolian_type_arguments_list_get(const Eolian_Type *tp)
+eolian_type_arguments_get(const Eolian_Type *tp)
 {
    EINA_SAFETY_ON_NULL_RETURN_VAL(tp, NULL);
    EINA_SAFETY_ON_FALSE_RETURN_VAL(eolian_type_type_get(tp) == EOLIAN_TYPE_FUNCTION, NULL);
@@ -59,7 +61,7 @@ eolian_type_arguments_list_get(const Eolian_Type *tp)
 }
 
 EAPI Eina_Iterator *
-eolian_type_subtypes_list_get(const Eolian_Type *tp)
+eolian_type_subtypes_get(const Eolian_Type *tp)
 {
    Eolian_Type_Type tpt;
    EINA_SAFETY_ON_NULL_RETURN_VAL(tp, NULL);
@@ -72,7 +74,7 @@ eolian_type_subtypes_list_get(const Eolian_Type *tp)
 }
 
 EAPI Eina_Iterator *
-eolian_type_struct_field_names_list_get(const Eolian_Type *tp)
+eolian_type_struct_field_names_get(const Eolian_Type *tp)
 {
    EINA_SAFETY_ON_NULL_RETURN_VAL(tp, NULL);
    EINA_SAFETY_ON_FALSE_RETURN_VAL(tp->type == EOLIAN_TYPE_STRUCT, NULL);
@@ -210,7 +212,7 @@ eolian_type_full_name_get(const Eolian_Type *tp)
 }
 
 EAPI Eina_Iterator *
-eolian_type_namespaces_list_get(const Eolian_Type *tp)
+eolian_type_namespaces_get(const Eolian_Type *tp)
 {
    Eolian_Type_Type tpp;
    EINA_SAFETY_ON_NULL_RETURN_VAL(tp, NULL);

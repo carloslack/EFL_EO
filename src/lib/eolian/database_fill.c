@@ -158,7 +158,7 @@ _db_fill_accessor(Eolian_Function *foo_id, Eo_Class_Def *kls,
    EINA_LIST_FOREACH(accessor->params, l, acc_param)
      {
         Eolian_Function_Parameter *desc = (Eolian_Function_Parameter*)
-            eolian_function_parameter_get(foo_id, acc_param->name);
+            eolian_function_parameter_get_by_name(foo_id, acc_param->name);
 
         if (!desc)
           {
@@ -201,6 +201,7 @@ _db_fill_property(Eolian_Class *cl, Eo_Class_Def *kls, Eo_Property_Def *prop)
                                                    EOLIAN_UNRESOLVED);
 
    database_function_scope_set(foo_id, prop->scope);
+   database_function_set_as_class(foo_id, prop->is_class);
 
    if (!_db_fill_keys     (foo_id,      prop)) goto failure;
    if (!_db_fill_values   (foo_id,      prop)) goto failure;
@@ -259,6 +260,7 @@ _db_fill_method(Eolian_Class *cl, Eo_Class_Def *kls, Eo_Method_Def *meth)
    database_function_description_set(foo_id, EOLIAN_COMMENT, meth->comment);
    database_function_data_set(foo_id, EOLIAN_LEGACY, meth->legacy);
    database_function_object_set_as_const(foo_id, meth->obj_const);
+   database_function_set_as_class(foo_id, meth->is_class);
 
    _db_fill_params(foo_id, meth);
 
@@ -318,7 +320,7 @@ _db_fill_implement(Eolian_Class *cl, Eolian_Implement *impl)
           }
 
         Eolian_Function *foo_id = (Eolian_Function*)
-                                   eolian_class_function_find_by_name(cl,
+                                   eolian_class_function_get_by_name(cl,
                                                                       func,
                                                                       ftype);
 
@@ -370,13 +372,13 @@ _db_fill_events(Eolian_Class *cl, Eo_Class_Def *kls)
 }
 
 static Eina_Bool
-_db_fill_class(Eo_Class_Def *kls, const char *filename)
+_db_fill_class(Eo_Class_Def *kls)
 {
    Eolian_Class *cl = database_class_add(kls->name, kls->type);
    const char *s;
    Eina_List *l;
 
-   database_class_file_set(cl, filename);
+   database_class_file_set(cl, kls->file);
 
    if (kls->comment)
      {
@@ -453,7 +455,7 @@ eo_parser_database_fill(const char *filename, Eina_Bool eot)
         switch (nd->type)
           {
            case NODE_CLASS:
-             if (!_db_fill_class(nd->def_class, filename))
+             if (!_db_fill_class(nd->def_class))
                goto error;
              break;
            default:

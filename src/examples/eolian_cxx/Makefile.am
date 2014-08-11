@@ -74,7 +74,11 @@ EOS = \
 
 IMPL = \
 	colourable.c \
-	colourablesquare.c
+	colourable_cxx.cc \
+	colourablesquare.c \
+	colourablesquare_cxx.cc \
+	colourable_stub.c \
+	colourablesquare_stub.c
 
 SRCS = \
 	eolian_cxx_simple_01.cc \
@@ -86,18 +90,30 @@ SRCS = \
 
 EXTRA_PROGRAMS = \
 	eolian_cxx_simple_01 \
+	eolian_cxx_simple_01_cxx_impl \
 	eolian_cxx_inherit_01 \
 	eolian_cxx_callbacks_01 \
 	eolian_cxx_eo_events_01 \
 	eolian_cxx_complex_types_01
 
 DATA_FILES = Makefile.examples $(EOS)
+EXTRA_DIST = $(DATA_FILES)
 
 eolian_cxx_simple_01_SOURCES = \
 	eolian_cxx_simple_01.cc \
 	colourable.c \
 	colourablesquare.c
 eolian_cxx_simple_01.$(OBJEXT): $(GENERATED)
+
+eolian_cxx_simple_01_cxx_impl_SOURCES = \
+	eolian_cxx_simple_01.cc \
+	colourable_stub.c \
+	colourable_stub.h \
+	colourablesquare_stub.c \
+	colourablesquare_stub.h \
+	colourable_cxx.cc \
+	colourablesquare_cxx.cc
+eolian_cxx_simple_01_cxx_impl.$(OBJEXT): $(GENERATED)
 
 eolian_cxx_inherit_01_SOURCES = \
 	eolian_cxx_inherit_01.cc \

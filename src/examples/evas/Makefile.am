@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = subdir-objects
+
 MAINTAINERCLEANFILES = Makefile.in
 
 include ../../Makefile_Edje_Helper.am
@@ -216,6 +218,11 @@ EXTRA_PROGRAMS += evas_3d_cube_rotate
 evas_3d_cube_rotate_SOURCES = evas-3d-cube-rotate.c
 evas_3d_cube_rotate_LDADD = $(ECORE_EVAS_COMMON_LDADD) @EFL_PTHREAD_LIBS@
 evas_3d_cube_rotate_CPPFLAGS = $(ECORE_EVAS_COMMON_CPPFLAGS)
+
+EXTRA_PROGRAMS += evas_3d_shooter
+evas_3d_shooter_SOURCES = shooter/evas-3d-shooter.c shooter/evas-3d-shooter-header.c
+evas_3d_shooter_LDADD = $(ECORE_EVAS_COMMON_LDADD) @EFL_PTHREAD_LIBS@
+evas_3d_shooter_CPPFLAGS = $(ECORE_EVAS_COMMON_CPPFLAGS)
 
 EXTRA_PROGRAMS += evas_3d_obj
 evas_3d_obj_SOURCES = evas-3d-obj.c

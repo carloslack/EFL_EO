@@ -720,6 +720,10 @@ modules/evas/engines/gl_common/shader/nv12_nomul_vert.h \
 modules/evas/engines/gl_common/shader/nv12_vert.h \
 modules/evas/engines/gl_common/shader/rect_frag.h \
 modules/evas/engines/gl_common/shader/rect_vert.h \
+modules/evas/engines/gl_common/shader/rgb_a_pair_frag.h \
+modules/evas/engines/gl_common/shader/rgb_a_pair_nomul_frag.h \
+modules/evas/engines/gl_common/shader/rgb_a_pair_nomul_vert.h \
+modules/evas/engines/gl_common/shader/rgb_a_pair_vert.h \
 modules/evas/engines/gl_common/shader/tex_12_frag.h \
 modules/evas/engines/gl_common/shader/tex_12_nomul_frag.h \
 modules/evas/engines/gl_common/shader/tex_12_nomul_vert.h \
@@ -812,6 +816,10 @@ modules/evas/engines/gl_common/shader/nv12_nomul_vert.shd \
 modules/evas/engines/gl_common/shader/nv12_vert.shd \
 modules/evas/engines/gl_common/shader/rect_frag.shd \
 modules/evas/engines/gl_common/shader/rect_vert.shd \
+modules/evas/engines/gl_common/shader/rgb_a_pair_frag.shd \
+modules/evas/engines/gl_common/shader/rgb_a_pair_nomul_frag.shd \
+modules/evas/engines/gl_common/shader/rgb_a_pair_nomul_vert.shd \
+modules/evas/engines/gl_common/shader/rgb_a_pair_vert.shd \
 modules/evas/engines/gl_common/shader/tex_12_frag.shd \
 modules/evas/engines/gl_common/shader/tex_12_nomul_frag.shd \
 modules/evas/engines/gl_common/shader/tex_12_nomul_vert.shd \
@@ -837,9 +845,9 @@ modules/evas/engines/gl_common/shader/yuy2_nomul_frag.shd \
 modules/evas/engines/gl_common/shader/yuy2_nomul_vert.shd \
 modules/evas/engines/gl_common/shader/yuy2_vert.shd
 
-dist_installed_evasmainheaders_DATA += modules/evas/engines/gl_generic/Evas_Engine_GL_Generic.h
 GL_GENERIC_SOURCES = \
-modules/evas/engines/gl_generic/evas_engine.c
+modules/evas/engines/gl_generic/evas_engine.c \
+modules/evas/engines/gl_generic/Evas_Engine_GL_Generic.h
 
 if EVAS_STATIC_BUILD_GL_COMMON
 lib_evas_libevas_la_SOURCES += $(GL_COMMON_SOURCES) $(GL_GENERIC_SOURCES)
@@ -941,17 +949,11 @@ modules_evas_engines_gl_sdl_module_la_CPPFLAGS = -I$(top_builddir)/src/lib/efl \
 -I$(top_srcdir)/src/modules/evas/engines/gl_common \
 @EVAS_CFLAGS@ \
 @evas_engine_gl_sdl_cflags@
-modules_evas_engines_gl_sdl_module_la_LIBADD =
-if ! EVAS_STATIC_BUILD_GL_COMMON
-modules_evas_engines_gl_sdl_module_la_LIBADD += \
-modules/evas/engines/gl_common/libevas_engine_gl_common.la
-endif
-modules_evas_engines_gl_sdl_module_la_LIBADD += \
+modules_evas_engines_gl_sdl_module_la_LIBADD = \
 @USE_EVAS_LIBS@ \
 @evas_engine_gl_sdl_libs@
 modules_evas_engines_gl_sdl_module_la_DEPENDENCIES = \
-@USE_EVAS_INTERNAL_LIBS@ \
-modules/evas/engines/gl_common/libevas_engine_gl_common.la
+@USE_EVAS_INTERNAL_LIBS@
 modules_evas_engines_gl_sdl_module_la_LDFLAGS = -module @EFL_LTMODULE_FLAGS@
 modules_evas_engines_gl_sdl_module_la_LIBTOOLFLAGS = --tag=disable-static
 endif
@@ -1231,7 +1233,7 @@ modules_evas_engines_drm_module_la_CPPFLAGS = -I$(top_builddir)/src/lib/efl \
 @evas_engine_drm_cflags@
 modules_evas_engines_drm_module_la_LIBADD = \
 @USE_EVAS_LIBS@ \
-@ECORE_DRM_LIBS@ \
+@USE_ECORE_DRM_LIBS@ \
 @evas_engine_drm_libs@
 modules_evas_engines_drm_module_la_DEPENDENCIES = @USE_EVAS_INTERNAL_LIBS@
 modules_evas_engines_drm_module_la_LDFLAGS = -module @EFL_LTMODULE_FLAGS@
@@ -2001,4 +2003,13 @@ tests/evas/images/Temple3-10.tgv \
 tests/evas/images/Temple3.jpg \
 tests/evas/images/Train-10.tgv \
 tests/evas/images/Train.jpg \
-tests/evas/images/mars_rover_panorama_half-size.jpg
+tests/evas/images/mars_rover_panorama_half-size.jpg \
+tests/evas/images/Light_exif.jpg \
+tests/evas/images/Light_exif_flip_h.jpg \
+tests/evas/images/Light_exif_180.jpg \
+tests/evas/images/Light_exif_flip_v.jpg \
+tests/evas/images/Light_exif_transpose.jpg \
+tests/evas/images/Light_exif_90.jpg \
+tests/evas/images/Light_exif_transverse.jpg \
+tests/evas/images/Light_exif_270.jpg
+

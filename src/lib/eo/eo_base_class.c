@@ -781,13 +781,13 @@ _eo_base_event_freeze_count_get(Eo *obj EINA_UNUSED, Eo_Base_Data *pd)
 }
 
 EOLIAN static void
-_eo_base_event_global_freeze(Eo *klass EINA_UNUSED, Eo_Base_Data *pd EINA_UNUSED)
+_eo_base_event_global_freeze(Eo *klass EINA_UNUSED, void *pd EINA_UNUSED)
 {
    event_freeze_count++;
 }
 
 EOLIAN static void
-_eo_base_event_global_thaw(Eo *klass EINA_UNUSED, Eo_Base_Data *pd EINA_UNUSED)
+_eo_base_event_global_thaw(Eo *klass EINA_UNUSED, void *pd EINA_UNUSED)
 {
    if (event_freeze_count > 0)
      {
@@ -800,7 +800,7 @@ _eo_base_event_global_thaw(Eo *klass EINA_UNUSED, Eo_Base_Data *pd EINA_UNUSED)
 }
 
 EOLIAN static int
-_eo_base_event_global_freeze_count_get(Eo *klass EINA_UNUSED, Eo_Base_Data *pd EINA_UNUSED)
+_eo_base_event_global_freeze_count_get(Eo *klass EINA_UNUSED, void *pd EINA_UNUSED)
 {
    return event_freeze_count;
 }
@@ -913,7 +913,7 @@ _eo_base_constructor(Eo *obj, Eo_Base_Data *pd EINA_UNUSED)
    _eo_condtor_done(obj);
 }
 
-static void
+EOLIAN static void
 _eo_base_destructor(Eo *obj, Eo_Base_Data *pd)
 {
    Eo *child;
@@ -930,20 +930,20 @@ _eo_base_destructor(Eo *obj, Eo_Base_Data *pd)
    _eo_condtor_done(obj);
 }
 
-static Eo *
+EOLIAN static Eo *
 _eo_base_finalize(Eo *obj, Eo_Base_Data *pd EINA_UNUSED)
 {
    return _eo_add_internal_end(obj);
 }
 
-static void
+EOLIAN static void
 _eo_base_class_constructor(Eo_Class *klass EINA_UNUSED)
 {
    event_freeze_count = 0;
    _legacy_events_hash = eina_hash_stringshared_new(_legacy_events_hash_free_cb);
 }
 
-static void
+EOLIAN static void
 _eo_base_class_destructor(Eo_Class *klass EINA_UNUSED)
 {
    eina_hash_free(_legacy_events_hash);

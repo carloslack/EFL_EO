@@ -2,6 +2,7 @@
 #define EOLIAN_CXX_EOLIAN_WRAPPERS_HH
 
 #include <cassert>
+#include <libgen.h>
 
 #include <Eolian.h>
 
@@ -30,7 +31,11 @@ ctor_t const ctor = {};
 inline const Eolian_Class*
 class_from_file(std::string const& file)
 {
-   return ::eolian_class_find_by_file(file.c_str());
+   char *dup = strdup(file.c_str());
+   char *bn = basename(dup);
+   const Eolian_Class *cl = ::eolian_class_get_by_file(bn);
+   free(dup);
+   return cl;
 }
 
 inline std::string
@@ -60,7 +65,7 @@ class_full_name(Eolian_Class const& klass)
 inline const Eolian_Class *
 class_from_name(std::string const& classname)
 {
-   return ::eolian_class_find_by_name(classname.c_str());
+   return ::eolian_class_get_by_name(classname.c_str());
 }
 
 inline std::string
@@ -137,29 +142,49 @@ inline std::string
 class_namespace_full(Eolian_Class const& klass)
 {
    std::string s;
-   const Eina_List* list =
-     ::eolian_class_namespaces_list_get(&klass), *itr;
+   Eina_Iterator* itr = ::eolian_class_namespaces_get(&klass);
    void* name;
-   EINA_LIST_FOREACH(list, itr, name)
+   EINA_ITERATOR_FOREACH(itr, name)
      {
         s += static_cast<const char*>(name);
         s += "::";
      }
+   eina_iterator_free(itr);
    if (s.size() >= 2)
      s = s.substr(0, s.size()-2);
    return safe_lower(s);
 }
 
-inline efl::eina::range_ptr_list<const Eolian_Class>
+/* proxy struct for neater iteration */
+template<typename T>
+struct iterator_iterator
+{
+   iterator_iterator(Eina_Iterator *iter): p_iter(iter) {}
+
+   efl::eina::iterator<T> begin()
+   {
+      return efl::eina::iterator<T>(p_iter);
+   }
+
+   efl::eina::iterator<T> end()
+   {
+      return efl::eina::iterator<T>();
+   }
+
+private:
+   Eina_Iterator *p_iter;
+};
+
+inline iterator_iterator<const Eolian_Class>
 class_list_all()
 {
-   return ::eolian_all_classes_list_get();
+   return iterator_iterator<const Eolian_Class>(::eolian_all_classes_get());
 }
 
 inline std::string
 function_name(Eolian_Function const& func)
 {
-   return safe_str(::eolian_function_name_get(&func));
+   return keyword_avoid(::eolian_function_name_get(&func));
 }
 
 inline std::string
@@ -205,6 +230,17 @@ inline efl::eolian::eolian_type_instance
 function_return_type(Eolian_Function const& func, ctor_t func_type)
 {
    return function_return_type(func, func_type.value);
+}
+
+inline bool
+function_return_is_explicit_void(Eolian_Function const& func, getter_t func_type)
+{
+   // XXX This function shouldn't be necessary. Eolian database should
+   //     forge functions as desired and the bindings generator shouldn't
+   //     be required to convert and understand this.
+   Eolian_Type const* type =
+     ::eolian_function_return_type_get(&func, func_type.value);
+   return !!type && type->type == EOLIAN_TYPE_VOID;
 }
 
 inline bool
@@ -333,13 +369,13 @@ inline efl::eolian::events_container_type
 event_list(Eolian_Class const& klass)
 {
    efl::eolian::events_container_type events;
-   const Eina_List* list = ::eolian_class_events_list_get(&klass);
-   unsigned int length = eina_list_count(list);
-   for (unsigned int i = 0; i < length; ++i)
+   Eina_Iterator *itr = ::eolian_class_events_get(&klass);
+   Eolian_Event *e;
+   EINA_ITERATOR_FOREACH(itr, e)
      {
-        Eolian_Event *e = static_cast<Eolian_Event*>(eina_list_nth(list, i));
         events.push_back(event_create(klass, e));
      }
+   eina_iterator_free(itr);
    return events;
 }
 

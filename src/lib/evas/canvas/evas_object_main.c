@@ -100,6 +100,7 @@ evas_object_change_reset(Evas_Object *eo_obj)
    obj->changed_color = EINA_FALSE;
    obj->changed_pchange = EINA_FALSE;
    obj->changed_src_visible = EINA_FALSE;
+   obj->need_surface_clear = EINA_FALSE;
 }
 
 void
@@ -223,6 +224,7 @@ evas_object_change(Evas_Object *eo_obj, Evas_Object_Protected_Data *obj)
         movch = EINA_TRUE;
         obj->changed_move = EINA_FALSE;
      }
+   else obj->need_surface_clear = EINA_TRUE;
 
    if (obj->changed) return;
 
@@ -1148,14 +1150,14 @@ _show(Evas_Object *eo_obj, Evas_Object_Protected_Data *obj)
 {
    if (!obj->layer) return;
    if (obj->delete_me) return;
+   if (obj->cur->visible)
+     {
+        return;
+     }
    if (evas_object_intercept_call_show(eo_obj, obj)) return;
    if (obj->is_smart)
      {
         eo_do(eo_obj, evas_obj_smart_show());
-     }
-   if (obj->cur->visible)
-     {
-        return;
      }
    EINA_COW_STATE_WRITE_BEGIN(obj, state_write, cur)
      {
@@ -1197,16 +1199,16 @@ _hide(Evas_Object *eo_obj, Evas_Object_Protected_Data *obj)
    MAGIC_CHECK_END();
    if (!obj->layer) return;
    if (obj->delete_me) return;
-   if (evas_object_intercept_call_hide(eo_obj, obj)) return;
-   if (obj->is_smart)
-     {
-        eo_do(eo_obj, evas_obj_smart_hide());
-     }
    if (!obj->cur->visible)
      {
         return;
      }
-
+  if (evas_object_intercept_call_hide(eo_obj, obj)) return;
+   if (obj->is_smart)
+     {
+        eo_do(eo_obj, evas_obj_smart_hide());
+     }
+ 
    EINA_COW_STATE_WRITE_BEGIN(obj, state_write, cur)
      {
         state_write->visible = 0;

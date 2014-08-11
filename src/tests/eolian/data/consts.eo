@@ -2,7 +2,7 @@ class Const {
    properties {
       a {
          set {
-            return bool (EINA_TRUE); /*@ comment for property set return */
+            return bool (true); /*@ comment for property set return */
          }
          get {
             buffer: const;
@@ -14,15 +14,14 @@ class Const {
       }
    }
    methods {
-      foo {
+      foo @const {
          /*@ comment foo */
          params {
             @in int a; /*@ a */
             @inout char b;
             @out double c;
          }
-         const;
-         return char *(NULL); /*@ comment for method return */
+         return char * (null); /*@ comment for method return */
       }
    }
 }

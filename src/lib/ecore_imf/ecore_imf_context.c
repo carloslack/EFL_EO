@@ -71,6 +71,15 @@ ecore_imf_context_default_id_by_canvas_type_get(const char *canvas_type)
         if (strcmp(id, "none") == 0) return NULL;
         if (ecore_imf_module_get(id)) return id;
      }
+   else
+     {
+        if (getenv("WAYLAND_DISPLAY"))
+          {
+             id = "wayland";
+             if (ecore_imf_module_get(id)) return id;
+          }
+        return NULL;
+     }
 
    modules = ecore_imf_module_available_get();
    if (!modules) return NULL;

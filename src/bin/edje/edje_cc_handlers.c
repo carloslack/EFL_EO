@@ -13,6 +13,7 @@
         code sample of the block
     \@description
         the block's description
+    \@since X.X
     \@endblock
 
     \@property
@@ -21,6 +22,7 @@
         property's parameter list
     \@effect
         the property description (lol)
+    \@since X.X
     \@endproperty
 */
 
@@ -40,6 +42,7 @@
 
 /**
  * @page edcref Edje Data Collection reference
+ *
  * An Edje Data Collection, it's a plain text file (normally identified with the
  * .edc extension), consisting of instructions for the Edje Compiler.
  *
@@ -55,7 +58,7 @@
  *      <ul>
  *        <li>@ref sec_toplevel_images_set "Set"</li>
  *        <ul>
- *          <li>@ref sec_toplevel_images_image "Image"</li>
+ *          <li>@ref sec_toplevel_images_set_image "Image"</li>
  *        </ul>
  *      </ul>
  *      <li>@ref sec_toplevel_fonts "Fonts"</li>
@@ -87,7 +90,6 @@
  *            <li>@ref sec_collections_group_parts_description "Description"</li>
  *            <ul>
  *              <li>@ref sec_collections_group_parts_description_relatives "Relatives (rel1/rel2)"</li>
- *              <li>@ref sec_collections_group_parts_description_links "Links"</li>
  *              <li>@ref sec_collections_group_parts_description_image "Image"</li>
  *              <ul>
  *                <li>@ref sec_collections_group_parts_description_image_fill "Fill"</li>
@@ -113,6 +115,7 @@
  *              </ul>
  *              <li>@ref sec_collections_group_parts_description_perspective "Perspective"</li>
  *              <li>@ref sec_collections_group_parts_descriptions_params "Params"</li>
+ *              <li>@ref sec_collections_group_parts_description_links "Links"</li>
  *            </ul>
  *          </ul>
  *        </ul>
@@ -129,6 +132,7 @@
  *    </ul>
  *    <li>@ref sec_lazedc "LazEDC"</li>
  *    <ul>
+ *       <li>@ref sec_lazedc_intro "Intro"</li>
  *       <li>@ref sec_lazedc_synonyms "Synonyms"</li>
  *       <li>@ref sec_lazedc_shorthand "Shorthand"</li>
  *    </ul>
@@ -201,6 +205,7 @@ static void st_color_class_color2(void);
 static void st_color_class_color3(void);
 
 static void ob_collections(void);
+static void st_collections_base_scale(void);
 
 static void ob_collections_group(void);
 static void st_collections_group_name(void);
@@ -516,6 +521,7 @@ New_Statement_Handler statement_handlers[] =
      IMAGE_SET_STATEMENTS("collections")
      {"collections.font", st_fonts_font}, /* dup */
      FONT_STYLE_CC_STATEMENTS("collections.")
+     {"collections.base_scale", st_collections_base_scale},
 
      {"collections.sounds.sample.name", st_collections_group_sound_sample_name},
      {"collections.sounds.sample.source", st_collections_group_sound_sample_source},
@@ -755,9 +761,11 @@ New_Statement_Handler statement_handlers[] =
      PROGRAM_STATEMENTS("collections.group")
 };
 
-/**
-   @edcsubsection{lazedc,LazEDC}
- */
+/** @edcsection{lazedc,
+ *              LazEDC} */
+
+/** @edcsubsection{lazedc_intro,
+ *                 LazEDC Intro} */
 
 /**
     @page edcref
@@ -815,9 +823,8 @@ New_Statement_Handler statement_handlers[] =
     @endblock
 */
 
-/**
-   @edcsubsection{lazedc_synonyms,Synonyms}
- */
+/** @edcsubsection{lazedc_synonyms,
+ *                 LazEDC Synonyms} */
 
 /**
     @page edcref
@@ -854,9 +861,8 @@ New_Statement_Handler statement_handlers_short[] =
      {"collections.group.parts.part.clip", st_collections_group_parts_part_clip_to_id},
 };
 
-/**
-   @edcsubsection{lazedc_shorthand,Shorthand}
- */
+/** @edcsubsection{lazedc_shorthand,
+ *                 LazEDC Shorthand} */
 
 /**
     @page edcref
@@ -1052,9 +1058,8 @@ New_Object_Handler object_handlers[] =
      PROGRAM_OBJECTS("collections.group")
 };
 
-/**
-   @edcsubsection{lazedc_blocks,Blocks}
- */
+/** @edcsubsection{lazedc_blocks,
+ *                 LazEDC Blocks} */
 
 /**
     @page edcref
@@ -1471,13 +1476,10 @@ _edje_program_copy(Edje_Program *ep, Edje_Program *ep2)
 
 /*****/
 
-/**
-   @edcsection{toplevel,Top-Level blocks}
- */
+/** @edcsection{toplevel,Top-Level blocks} */
 
-/**
-   @edcsubsection{toplevel_externals,Externals}
- */
+/** @edcsubsection{toplevel_externals,
+ *                 Externals} */
 
 /**
     @page edcref
@@ -1490,7 +1492,7 @@ _edje_program_copy(Edje_Program *ep, Edje_Program *ep2)
         }
     @description
         The "externals" block is used to list each external module file that will be used in others
-	programs.
+        programs.
     @endblock
 
     @property
@@ -1549,9 +1551,8 @@ st_externals_external(void)
      }
 }
 
-/**
-   @edcsubsection{toplevel_images,Images}
- */
+/** @edcsubsection{toplevel_images,
+ *                 Images} */
 
 /**
     @page edcref
@@ -1563,25 +1564,8 @@ st_externals_external(void)
             image: "filename1.ext" COMP;
             image: "filename2.ext" LOSSY 99;
             image: "filename2.ext" LOSSY_ETC1 50;
-	    set {
-	       name: "image_name_used";
-               image {
-                  image: "filename3.ext" LOSSY 90;
-                  size: 201 201 500 500;
-               }
-               image {
-                  image: "filename4.ext" COMP;
-                  size: 51 51 200 200;
-               }
-               image {
-                  image: "filename5.ext" COMP;
-                  size: 11 11 50 50;
-               }
-               image {
-                  image: "filename6.ext" RAW;
-                  size: 0 0 10 10;
-               }
-            }
+            set { }
+            set { }
             ..
         }
     @description
@@ -1699,9 +1683,8 @@ st_images_image(void)
      }
 }
 
-/**
-   @edcsubsection{toplevel_images_set,Set}
- */
+/** @edcsubsection{toplevel_images_set,
+ *                 Images.Set} */
 
 /**
     @page edcref
@@ -1709,31 +1692,21 @@ st_images_image(void)
     @block
         set
     @context
-    set {
-       name: "image_name_used";
-       image {
-          image: "filename3.ext" LOSSY 90;
-          size: 201 201 500 500;
-       }
-       image {
-          image: "filename4.ext" COMP;
-          size: 51 51 200 200;
-       }
-       image {
-          image: "filename5.ext" COMP;
-          size: 11 11 50 50;
-       }
-       image {
-          image: "filename6.ext" RAW;
-          size: 0 0 10 10;
-       }
-    }
+        images {
+            ..
+            set {
+                name: "image_name_used";
+                image { }
+                image { }
+                ...
+            }
+        }
     @description
-        The "set" block is used to define an image with different content depending on their size.
-        Besides the document's root, additional "set" blocks can be
-        included inside other blocks, normally "collections", "group" and
-        "part", easing maintenance of the file list when the theme is split
-        among multiple files.
+        The "set" block is used to define an image with different content
+        depending on their size. Besides the document's root, additional
+        "set" blocks can be included inside other blocks, normally
+        "collections", "group" and "part", easing maintenance of the file
+        list when the theme is split among multiple files.
     @endblock
  */
 static void
@@ -1778,18 +1751,31 @@ st_images_set_name(void)
    edje_file->image_dir->sets[edje_file->image_dir->sets_count - 1].name = parse_str(0);
 }
 
-/**
-   @edcsubsection{toplevel_images_image,Image}
- */
+/**  @edcsubsection{toplevel_images_set_image,
+ *                  Images.Set.Image} */
 
 /**
     @page edcref
 
     @block
         image
+    @context
+        images {
+            ..
+            set {
+                ..
+                image {
+                   image: "filename4.ext" COMP;
+                   size: 51 51 200 200;
+                   border: 0 0 0 0;
+                   border_scale_by: 0.0;
+                }
+                ..
+            }
+        }
     @description
         The "image" block inside a "set" block define the characteristic of an image.
-	Every block will describe one image and the size rule to use it.
+        Every block will describe one image and the size rule to use it.
     @endblock
 **/
 static void
@@ -1853,7 +1839,7 @@ st_images_set_image_image(void)
     @property
         size
     @parameters
-        [minw minh maxw mawh]
+        [minw] [minh] [maxw] [maxh]
     @effect
         Define the minimal and maximal size that will select the specified image.
     @endproperty
@@ -1889,11 +1875,11 @@ st_images_set_image_size(void)
         border
     @parameters
         [left] [right] [top] [bottom]
-    @since 1.8
     @effect
         If set, the area (in pixels) of each side of the image will be
         displayed as a fixed size border, from the side -> inwards, preventing
         the corners from being changed on a resize.
+    @since 1.8
     @endproperty
 */
 static void
@@ -1911,14 +1897,12 @@ st_images_set_image_border(void)
    entry->border.b = parse_int_range(3, 0, 0x7fffffff);
 }
 
-
 /**
     @page edcref
     @property
         border_scale_by
     @parameters
-        0.0 or bigger (0.0 or 1.0 to turn it off)
-    @since 1.8
+        [value]
     @effect
         If border scaling is enabled then normally the OUTPUT border sizes
         (e.g. if 3 pixels on the left edge are set as a border, then normally
@@ -1928,6 +1912,9 @@ st_images_set_image_border(void)
         factor by this multiplier, allowing the creation of "supersampled"
         borders to make much higher resolution outputs possible by always using
         the highest resolution artwork and then runtime scaling it down.
+
+        Valid values are: 0.0 or bigger (0.0 or 1.0 to turn it off)
+    @since 1.8
     @endproperty
 */
 static void
@@ -1949,9 +1936,8 @@ st_images_set_image_border_scale_by(void)
    ed->image.border.scale_by = FROM_DOUBLE(parse_float_range(0, 0.0, 999999999.0));
 }
 
-/**
-   @edcsubsection{toplevel_fonts,Fonts}
- */
+/** @edcsubsection{toplevel_fonts,
+ *                 Fonts} */
 
 /**
     @page edcref
@@ -2004,9 +1990,8 @@ st_fonts_font(void)
    eina_hash_direct_add(edje_file->fonts, fn->name, fn);
 }
 
-/**
-   @edcsubsection{toplevel_data,Data}
- */
+/** @edcsubsection{toplevel_data,
+ *                 Data} */
 
 /**
     @page edcref
@@ -2153,9 +2138,8 @@ st_data_file(void)
    free(filename);
 }
 
-/**
-   @edcsubsection{toplevel_color_classes,Color Classes}
- */
+/** @edcsubsection{toplevel_color_classes,
+ *                 Color Classes} */
 
 /**
     @page edcref
@@ -2303,9 +2287,8 @@ st_color_class_color3(void)
    cc->a3 = parse_int_range(3, 0, 255);
 }
 
-/**
-   @edcsubsection{toplevel_styles,Styles}
- */
+/** @edcsubsection{toplevel_styles,
+ *                 Styles} */
 
 /**
     @page edcref
@@ -2429,9 +2412,10 @@ st_styles_style_tag(void)
    stl->tags = eina_list_append(stl->tags, tag);
 }
 
-/**
-   @edcsection{collections,Collections Blocks}
- */
+/** @edcsection{collections,Collections Blocks} */
+
+/** @edcsubsection{collections,
+ *                 Collections} */
 
 /**
     @page edcref
@@ -2439,7 +2423,7 @@ st_styles_style_tag(void)
         collections
     @context
         collections {
-            ..
+            base_scale: 1.2;
             sounds { }
             vibrations { }
             group { }
@@ -2464,8 +2448,35 @@ ob_collections(void)
 }
 
 /**
-   @edcsubsection{collections_sounds,Sounds}
- */
+    @page edcref
+    @property
+        base_scale
+    @parameters
+        [scale val]
+    @effect
+        The base_scale is the standard scale value of the collection.
+        The default base_scale is 1.0. It means the collection is made in the environment
+        which is same with a desktop(The monitor has 96 dpi).
+        If you make a collection in another environment(ex: 115 dpi), you have to
+        set the base_scale(ex: 1.2). Then it will be shown same size in the desktop.
+    @since 1.11
+    @endproperty
+*/
+static void
+st_collections_base_scale(void)
+{
+   check_min_arg_count(1);
+
+   edje_file->base_scale = FROM_DOUBLE(parse_float_range(0, 0.0, 999999999.0));
+   if (edje_file->base_scale == ZERO)
+     {
+        ERR("The base_scale is 0.0. The value should be bigger than 0.0.");
+        exit(-1);
+     }
+}
+
+/** @edcsubsection{collections_sounds,
+ *                 Sounds} */
 
 /**
     @page edcref
@@ -2473,63 +2484,117 @@ ob_collections(void)
         sounds
     @context
         sounds {
-           sample {
-              name: "sound_file1" COMP;
-              source: "sound_file1.wav";
-           }
-           sample {
-              name: "sound_file2" LOSSY 0.4;
-              source: "sound_file2.wav";
-           }
-           tone: "tone-1"  2300;
+            tone: "tone-1"  2300;
+            tone: "tone-2"  2300;
+            sample { }
+            sample { }
+            ..
         }
-
     @description
         The "sounds" block contains a list of one or more sound sample and tones items.
     @endblock
 */
 
 /**
-   @edcsubsection{collections_sounds_sample,Sample}
+    @page edcref
+    @property
+        tone
+    @parameters
+        [tone name] [frequency]
+    @effect
+        sound of specific frequency
+    @since 1.1
+    @endproperty
  */
+static void
+st_collections_group_sound_tone(void)
+{
+   Edje_Sound_Tone *tone;
+   const char *tmp;
+   unsigned int i;
+   int value;
+
+   check_arg_count(2);
+   
+   if (!edje_file->sound_dir)
+     edje_file->sound_dir = mem_alloc(SZ(Edje_Sound_Directory));
+   
+   tmp = parse_str(0);
+   /* Audible range 20 to 20KHz */
+   value = parse_int_range(1, 20, 20000);
+   
+   /* Check for Tone duplication */
+   for (i = 0; i < edje_file->sound_dir->tones_count; i++)
+     {
+        if (!strcmp(edje_file->sound_dir->tones[i].name, tmp))
+          {
+             ERR("Tone name: %s already exist.", tmp);
+             free((char *)tmp);
+             exit(-1);
+          }
+        if (edje_file->sound_dir->tones[i].value == value)
+          {
+             ERR("Tone name %s with same frequency %d exist.",
+                 edje_file->sound_dir->tones[i].name, value);
+             exit(-1);
+          }
+     }
+   edje_file->sound_dir->tones_count++;
+   tone = realloc(edje_file->sound_dir->tones,
+                  sizeof (Edje_Sound_Tone) * 
+                  edje_file->sound_dir->tones_count);
+   if (!tone)
+     {
+        ERR("No enough memory.");
+        exit(-1);
+     }
+   edje_file->sound_dir->tones = tone;
+   
+   tone = edje_file->sound_dir->tones + edje_file->sound_dir->tones_count - 1;
+   memset(tone, 0, sizeof (Edje_Sound_Tone));
+   
+   tone->name = tmp;
+   tone->value = value;
+   tone->id = edje_file->sound_dir->tones_count - 1;
+}
+
+/** @edcsubsection{collections_sounds_sample,
+ *                 Sounds.Sample} */
 
 /**
     @page edcref
     @block
         sample
     @context
-       sample {
-          name: "sound_file1" RAW;
-          source: "sound_file1.wav";
-       }
-       sample {
-          name: "sound_file2" LOSSY 0.5;
-          source: "sound_file2.wav";
-       }
-       sample {
-          name: "sound_file3" COMP;
-          source: "sound_file3.wav";
-       }
-       sample {
-          name: "sound_file4" AS_IS;
-          source: "sound_file1.wav";
-       }
+        sounds {
+            ..
+            sample {
+                name: "sound_file1" RAW;
+                source: "sound_file1.wav";
+            }
+            sample {
+                name: "sound_file2" LOSSY 0.5;
+                source: "sound_file2.wav";
+            }
+        }
     @description
         The sample block defines the sound sample.
     @endblock
     @property
         name
     @parameters
-        [sample name] [compression type] [if lossy, then quality]
+        [sample name] [compression type] (quality)
     @effect
         Used to include each sound file. The full path to the directory holding
         the sounds can be defined later with edje_cc's "-sd" option.
+        Valid types are:
         @li RAW: Uncompressed.
         @li COMP: Lossless compression.
-        @li LOSSY [-0.1  - 1.0]: Lossy compression with quality from 0 to 1.0.
+        @li LOSSY [-0.1  - 1.0]: Lossy compression with quality from 0.0 to 1.0.
         @li AS_IS: Check for re-encoding, no compression/encoding, just write the file information as it is.
+
+    @since 1.1
     @endproperty
-    @since 1.1.0
  */
 static void
 st_collections_group_sound_sample_name(void)
@@ -2596,8 +2661,8 @@ st_collections_group_sound_sample_name(void)
     @effect
         The Sound source file name (Source can be mono/stereo WAV file.
         Only files with 44.1 KHz sample rate supported now)
+    @since 1.1
     @endproperty
-    @since 1.1.0
  */
 static void
 st_collections_group_sound_sample_source(void)
@@ -2617,72 +2682,9 @@ st_collections_group_sound_sample_source(void)
    check_arg_count(1);
 }
 
-/**
-    @page edcref
-    @property
-        tone
-    @parameters
-        [tone name] [frequency]
-    @effect
-        sound of specific frequency
-    @endproperty
-    @since 1.1.0
- */
-static void
-st_collections_group_sound_tone(void)
-{
-   Edje_Sound_Tone *tone;
-   const char *tmp;
-   unsigned int i;
-   int value;
 
-   check_arg_count(2);
-   
-   if (!edje_file->sound_dir)
-     edje_file->sound_dir = mem_alloc(SZ(Edje_Sound_Directory));
-   
-   tmp = parse_str(0);
-   /* Audible range 20 to 20KHz */
-   value = parse_int_range(1, 20, 20000);
-   
-   /* Check for Tone duplication */
-   for (i = 0; i < edje_file->sound_dir->tones_count; i++)
-     {
-        if (!strcmp(edje_file->sound_dir->tones[i].name, tmp))
-          {
-             ERR("Tone name: %s already exist.", tmp);
-             free((char *)tmp);
-             exit(-1);
-          }
-        if (edje_file->sound_dir->tones[i].value == value)
-          {
-             ERR("Tone name %s with same frequency %d exist.",
-                 edje_file->sound_dir->tones[i].name, value);
-             exit(-1);
-          }
-     }
-   edje_file->sound_dir->tones_count++;
-   tone = realloc(edje_file->sound_dir->tones,
-                  sizeof (Edje_Sound_Tone) * 
-                  edje_file->sound_dir->tones_count);
-   if (!tone)
-     {
-        ERR("No enough memory.");
-        exit(-1);
-     }
-   edje_file->sound_dir->tones = tone;
-   
-   tone = edje_file->sound_dir->tones + edje_file->sound_dir->tones_count - 1;
-   memset(tone, 0, sizeof (Edje_Sound_Tone));
-   
-   tone->name = tmp;
-   tone->value = value;
-   tone->id = edje_file->sound_dir->tones_count - 1;
-}
-
-/**
-   @edcsubsection{collections_vibrations,Vibrations}
- */
+/** @edcsubsection{collections_vibrations,
+ *                 Vibrations} */
 
 /**
     @page edcref
@@ -2690,31 +2692,32 @@ st_collections_group_sound_tone(void)
         vibrations
     @context
         vibrations {
-           sample {
-              name: "vibration_file1";
-              source: "vibration_file1.xxx";
-           }
+           sample { }
+           sample { }
+           ..
         }
 
     @description
         The "vibrations" block contains a list of one or more vibration sample.
-    @endblock
     @since 1.10
+    @endblock
 */
 
-/**
-   @edcsubsection{collections_vibrations_sample,Sample}
- */
+/** @edcsubsection{collections_vibrations_sample,
+ *                 Vibrations.Sample} */
 
 /**
     @page edcref
     @block
         sample
     @context
-       sample {
-          name: "vibration_file1";
-          source: "vibration_file1.xxx";
-       }
+        vibrations {
+            sample {
+                name: "vibration_file1";
+                source: "vibration_file1.xxx";
+            }
+            ..
+        }
     @description
         The sample block defines the vibration sample.
     @endblock
@@ -2725,8 +2728,8 @@ st_collections_group_sound_tone(void)
     @effect
         Used to include each vibration file. The full path to the directory holding
         the vibrations can be defined later with edje_cc's "-vd" option.
-    @endproperty
     @since 1.10
+    @endproperty
  */
 static void
 st_collections_group_vibration_sample_name(void)
@@ -2779,8 +2782,8 @@ st_collections_group_vibration_sample_name(void)
         [vibration file name]
     @effect
         The Vibration source file name
-    @endproperty
     @since 1.10
+    @endproperty
  */
 static void
 st_collections_group_vibration_sample_source(void)
@@ -2862,9 +2865,8 @@ _link_combine(void)
    current_program = NULL;
 }
 
-/**
-   @edcsubsection{collections_group,Group}
- */
+/** @edcsubsection{collections_group,
+ *                 Group} */
 
 /**
     @page edcref
@@ -3138,14 +3140,14 @@ _part_copy(Edje_Part *ep, Edje_Part *ep2)
     @property
         inherit_only
     @parameters
-        1 or 0
+        [1 or 0]
     @effect
         This flags a group as being used only for inheriting, which
         will inhibit edje_cc resolving of programs and parts that may
         not exist in this group, but are located in the group which is inheriting
         this group.
-    @endproperty
     @since 1.10
+    @endproperty
 */
 static void
 st_collections_group_inherit_only(void)
@@ -3163,15 +3165,14 @@ st_collections_group_inherit_only(void)
     @property
         target_group
     @parameters
-        [name] [part/program1] [part/program2] [part/program3] ...
+        [name] [part or program] (part or program) (part or program) ...
     @effect
         This creates a group of parts/programs which can then be referenced
         by a single 'groups' or 'target_groups' statement inside a program.
         The resulting program will have all of the parts/programs within the specified
         group added as targets.
-        At least one part/program MUST be specified.
-    @endproperty
     @since 1.10
+    @endproperty
 */
 static void
 st_collections_group_target_group(void)
@@ -3218,8 +3219,8 @@ st_collections_group_target_group(void)
         to fix that).
         @warning When inheriting any parts, descriptions without state names are NOT
         allowed.
+    @since 1.10
     @endproperty
-    @since 1.1.0
 */
 static void
 st_collections_group_inherit(void)
@@ -3500,7 +3501,7 @@ st_collections_group_script_only(void)
         For example, running an Embryo script which calls EDC which has a
         script{} block is unsafe, and the outer-most (first) Embryo stack is GUARANTEED
         to be corrupted. Only use this flag if you are sure that you know what you are doing.
-        @since 1.10
+    @since 1.10
     @endproperty
 */
 static void
@@ -3607,7 +3608,7 @@ st_collections_group_max(void)
    @property
        broadcast_signal
    @parameters
-       [broadcast]
+       [on/off]
    @effect
        Signal got automatically broadcasted to all sub group part. Default to
        true since 1.1.
@@ -3647,8 +3648,105 @@ st_collections_group_nobroadcast(void)
 }
 
 /**
-   @edcsubsection{collections_group_script,Script}
+    @page edcref
+    @property
+        orientation
+    @parameters
+        [AUTO/LTR/RTL]
+    @effect
+        This defines GROUP orientation.
+        This is useful if you want match interface orientation with language.
+        @li AUTO  - Follow system defs.
+        @li LTR  - suitable for Left To Right Languages (latin)
+        @li RTL - suitable for Right To Left Languages (Hebrew, Arabic interface)
+    @endproperty
+*/
+static void
+st_collections_group_orientation(void)
+{
+   Edje_Part_Collection *pc;
+
+   check_arg_count(1);
+
+   pc = eina_list_data_get(eina_list_last(edje_collections));
+   pc->prop.orientation = parse_enum(0,
+         "AUTO", EDJE_ORIENTATION_AUTO,
+         "LTR", EDJE_ORIENTATION_LTR,
+         "RTL", EDJE_ORIENTATION_RTL,
+         NULL);
+}
+
+/**
+    @page edcref
+    @property
+        mouse_events
+    @parameters
+        [1 or 0]
+    @effect
+        Change the default value of mouse_events for every part in this group.
+        Defaults to 1 if not set, to maintain compatibility.
+    @endproperty
  */
+static void
+st_collections_group_mouse_events(void)
+{
+   Edje_Part_Collection_Parser *pcp;
+
+   check_arg_count(1);
+
+   pcp = eina_list_data_get(eina_list_last(edje_collections));
+   pcp->default_mouse_events = parse_bool(0);
+}
+
+static void
+st_collections_group_mouse(void)
+{
+   Edje_Part_Collection_Parser *pcp;
+
+   check_arg_count(0);
+
+   pcp = eina_list_data_get(eina_list_last(edje_collections));
+   pcp->default_mouse_events = 1;
+}
+
+static void
+st_collections_group_nomouse(void)
+{
+   Edje_Part_Collection_Parser *pcp;
+
+   check_arg_count(0);
+
+   pcp = eina_list_data_get(eina_list_last(edje_collections));
+   pcp->default_mouse_events = 0;
+}
+
+/**
+    @page edcref
+    @property
+        program_source
+    @parameters
+        [source name]
+    @effect
+        Change the default value of source for every program in the current group
+        which is declared after this value is set.
+        Defaults to an unset value to maintain compatibility.
+    @since 1.10
+    @endproperty
+ */
+static void
+st_collections_group_program_source(void)
+{
+   Edje_Part_Collection_Parser *pcp;
+
+   check_arg_count(1);
+
+   pcp = eina_list_last_data_get(edje_collections);
+   free(pcp->default_source);
+   pcp->default_source = parse_str(0);
+}
+
+/** @edcsubsection{collections_group_script,
+ *                 Group.Script} */
 
 /**
     @page edcref
@@ -3764,107 +3862,8 @@ st_collections_group_data_item(void)
      eina_hash_direct_add(pc->data, key, es);
 }
 
-/**
-    @page edcref
-    @property
-        orientation
-    @parameters
-    enum AUTO, LTR, RTL
-    @effect
-        This defines GROUP orientation.
-        This is useful if you want match interface orientation with language.
-        AUTO  - Follow system defs.
-        LTR  - suitable for Left To Right Languages (latin)
-        RTL - suitable for Right To Left Languages (Hebrew, Arabic interface)
-    @endproperty
-*/
-static void
-st_collections_group_orientation(void)
-{
-   Edje_Part_Collection *pc;
-
-   check_arg_count(1);
-
-   pc = eina_list_data_get(eina_list_last(edje_collections));
-   pc->prop.orientation = parse_enum(0,
-         "AUTO", EDJE_ORIENTATION_AUTO,
-         "LTR", EDJE_ORIENTATION_LTR,
-         "RTL", EDJE_ORIENTATION_RTL,
-         NULL);
-}
-
-/**
-    @page edcref
-    @property
-        mouse_events
-    @parameters
-        [1 or 0]
-    @effect
-        Change the default value of mouse_events for every part in this group.
-        Defaults to 1 if not set, to maintain compatibility.
-    @endproperty
- */
-static void
-st_collections_group_mouse_events(void)
-{
-   Edje_Part_Collection_Parser *pcp;
-
-   check_arg_count(1);
-
-   pcp = eina_list_data_get(eina_list_last(edje_collections));
-   pcp->default_mouse_events = parse_bool(0);
-}
-
-static void
-st_collections_group_mouse(void)
-{
-   Edje_Part_Collection_Parser *pcp;
-
-   check_arg_count(0);
-
-   pcp = eina_list_data_get(eina_list_last(edje_collections));
-   pcp->default_mouse_events = 1;
-}
-
-static void
-st_collections_group_nomouse(void)
-{
-   Edje_Part_Collection_Parser *pcp;
-
-   check_arg_count(0);
-
-   pcp = eina_list_data_get(eina_list_last(edje_collections));
-   pcp->default_mouse_events = 0;
-}
-
-/**
-    @page edcref
-    @property
-        program_source
-    @parameters
-        [source name]
-    @effect
-        Change the default value of source for every program in the current group
-        which is declared after this value is set.
-        Defaults to an unset value to maintain compatibility.
-    @since 1.10
-    @endproperty
- */
-static void
-st_collections_group_program_source(void)
-{
-   Edje_Part_Collection_Parser *pcp;
-
-   check_arg_count(1);
-
-   pcp = eina_list_last_data_get(edje_collections);
-   free(pcp->default_source);
-   pcp->default_source = parse_str(0);
-}
-
-/**
-   @edcsubsection{collections_group_limits,Limits}
- */
+/** @edcsubsection{collections_group_limits,
+ *                 Group.Limits} */
 
 /**
     @page edcref
@@ -3966,9 +3965,8 @@ st_collections_group_limits_horizontal(void)
    el->value = parse_int_range(1, 1, 0xffff);
 }
 
-/**
-   @edcsubsection{collections_group_parts,Parts}
- */
+/** @edcsubsection{collections_group_parts,
+ *                 Group.Parts} */
 
 /**
     @page edcref
@@ -3978,15 +3976,25 @@ st_collections_group_limits_horizontal(void)
         group {
             parts {
                 alias: "theme_part_path" "somegroup:real_part_path";
-                group { "theme_part_path"; }
+                part { "theme_part_path"; }
+                part {  }
+                ..
             }
         }
     @description
+        The parts block is the container for all the parts in the group.
+
+    @property
+        alias
+    @parameters
+        [alias name] [other_group:part name]
+    @effect
         Allows for a part to be referenced externally as though
         it had the name of the alias.
         In the above example, swallowing an object into part "theme_part_path"
         will result in the object actually being swallowed into the part
         "real_part_path" in the "somegroup" group.
+    @endproperty
     @endblock
 */
 static void
@@ -4010,9 +4018,8 @@ st_collections_group_parts_alias(void)
    eina_hash_add(pc->aliased, aliased, alias);
 }
 
-/**
-   @edcsubsection{collections_group_parts_part,Part}
- */
+/** @edcsubsection{collections_group_parts_part,
+ *                 Group.Parts.Part} */
 
 /**
     @page edcref
@@ -4239,8 +4246,8 @@ _part_free(Edje_Part *ep)
         ALL existing attributes, except part name, are overwritten.
         @warning When inheriting any parts, descriptions without state names are NOT
         allowed.
-    @endproperty
     @since 1.10
+    @endproperty
 */
 static void
 st_collections_group_parts_part_inherit(void)
@@ -4329,13 +4336,13 @@ _program_remove(const char *name, Edje_Program **pgrms, unsigned int count)
     @property
         program_remove
     @parameters
-        [program name] [program name] [program name] ...
+        [program name] (program name) (program name) ...
     @effect
         Removes the listed programs from an inherited group. Removing nonexistent
         programs is not allowed.
         This will break program sequences if a program in the middle of the sequence is removed.
-    @endproperty
     @since 1.10
+    @endproperty
 */
 static void
 st_collections_group_program_remove(void)
@@ -4423,12 +4430,12 @@ _part_name_check(void)
     @property
         part_remove
     @parameters
-        [part name] [part name] [part name] ...
+        [part name] (part name) (part name) ...
     @effect
         Removes the listed parts from an inherited group. Removing nonexistent
         parts is not allowed.
-    @endproperty
     @since 1.10
+    @endproperty
 */
 static void
 st_collections_group_part_remove(void)
@@ -4529,8 +4536,8 @@ st_collections_group_parts_part_name(void)
             @li BOX
             @li TABLE
             @li EXTERNAL
-	    @li PROXY
-	    @li SPACER
+            @li PROXY
+            @li SPACER
     @endproperty
 */
 static void
@@ -4583,8 +4590,9 @@ st_collections_group_parts_part_type(void)
             @li BOUNDARY_LEFT
             @li BOUNDARY_FRONT
             @li BOUNDARY_BACK
+
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 #ifdef HAVE_EPHYSICS
 static void
@@ -4650,8 +4658,8 @@ st_collections_group_parts_part_physics_body(void)
         Nested part inherits it's location relatively to the parent part.
         To declare a nested part just start a new part within current part decl.
         You must define parent part name before adding nested parts.
+    @since 1.7
     @endproperty
-    @since 1.7.0
 */
 
 /**
@@ -4664,8 +4672,8 @@ st_collections_group_parts_part_physics_body(void)
         The part's name which this part is inserted before. One part cannot
         have both insert_before and insert_after. One part cannot refer
         more than one by insert_before.
+    @since 1.1
     @endproperty
-    @since 1.1.0
 */
 static void
 st_collections_group_parts_part_insert_before(void)
@@ -4687,8 +4695,8 @@ st_collections_group_parts_part_insert_before(void)
         The part's name which this part is inserted after. One part cannot
         have both insert_before and insert_after. One part cannot refer
         more than one by insert_after.
+    @since 1.1
     @endproperty
-    @since 1.1.0
 */
 static void
 st_collections_group_parts_part_insert_after(void)
@@ -4778,9 +4786,9 @@ st_collections_group_parts_part_norepeat(void)
         [FLAG] ...
     @effect
         Specifies whether events with the given flags should be ignored,
-	i.e., will not have the signals emitted to the parts. Multiple flags
-	must be separated by spaces, the effect will be ignoring all events
-	with one of the flags specified. Possible flags:
+        i.e., will not have the signals emitted to the parts. Multiple flags
+        must be separated by spaces, the effect will be ignoring all events
+        with one of the flags specified. Possible flags:
             @li NONE (default value, no event will be ignored)
             @li ON_HOLD
     @endproperty
@@ -5079,8 +5087,8 @@ st_collections_group_parts_part_source6(void)
     @property
         effect
     @parameters
-        [EFFECT]
-        (optional) [SHADOW DIRECTION]
+        [effect]
+        (shadow direction)
     @effect
         Causes Edje to draw the selected effect among:
         @li PLAIN
@@ -5146,7 +5154,7 @@ st_collections_group_parts_part_effect(void)
     @property
         entry_mode
     @parameters
-        [MODE]
+        [mode]
     @effect
         Sets the edit mode for a textblock part to one of:
         @li NONE
@@ -5178,7 +5186,7 @@ st_collections_group_parts_part_entry_mode(void)
     @property
         select_mode
     @parameters
-        [MODE]
+        [mode]
     @effect
         Sets the selection mode for a textblock part to one of:
         @li DEFAULT selection mode is what you would expect on any desktop. Press
@@ -5204,7 +5212,7 @@ st_collections_group_parts_part_select_mode(void)
     @property
         cursor_mode
     @parameters
-        [MODE]
+        [mode]
     @effect
         Sets the cursor mode for a textblock part to one of:
         @li UNDER cursor mode means the cursor will draw below the character pointed
@@ -5262,9 +5270,8 @@ st_collections_group_parts_part_access(void)
    current_part->access = parse_bool(0);
 }
 
-/**
-   @edcsubsection{collections_group_parts_dragable,Dragable}
- */
+/** @edcsubsection{collections_group_parts_dragable,
+ *                 Group.Parts.Part.Dragable} */
 
 /**
     @page edcref
@@ -5275,7 +5282,7 @@ st_collections_group_parts_part_access(void)
             ..
             dragable {
                 confine: "another part";
-		threshold: "another part";
+                threshold: "another part";
                 events:  "another dragable part";
                 x: 0 0 0;
                 y: 0 0 0;
@@ -5378,7 +5385,7 @@ st_collections_group_parts_part_dragable_confine(void)
         [another part's name]
     @effect
         When set, the movement of the dragged part can only start when it get
-	moved enough to be outside of the threshold part.
+        moved enough to be outside of the threshold part.
     @endproperty
 */
 static void
@@ -5426,9 +5433,8 @@ st_collections_group_parts_part_dragable_events(void)
      }
 }
 
-/**
-   @edcsubsection{collections_group_parts_items,Items}
- */
+/** @edcsubsection{collections_group_parts_items,
+ *                 Group.Parts.Part.Box/Table.Items} */
 
 /**
     @page edcref
@@ -5437,7 +5443,7 @@ st_collections_group_parts_part_dragable_events(void)
     @context
         part {
             ..
-	    box {
+            box/table {
                 items {
                     item {
                         type: TYPE;
@@ -5454,13 +5460,13 @@ st_collections_group_parts_part_dragable_events(void)
                     }
                     ..
                 }
-	    }
+            }
             ..
         }
     @description
         On a part of type BOX, this block can be used to set other groups
-	as elements of the box. These can be mixed with external objects set
-	by the application through the edje_object_part_box_* API.
+        as elements of the box. These can be mixed with external objects set
+        by the application through the edje_object_part_box_* API.
     @endblock
 */
 static void ob_collections_group_parts_part_box_items_item(void)
@@ -5532,9 +5538,11 @@ static void ob_collections_group_parts_part_box_items_item(void)
     @property
         type
     @parameters
-        Only GROUP for now (defaults to it)
+        [item type]
     @effect
         Sets the type of the object this item will hold.
+        Supported types are:
+        @li GROUP
     @endproperty
 */
 static void st_collections_group_parts_part_box_items_item_type(void)
@@ -5549,10 +5557,12 @@ static void st_collections_group_parts_part_box_items_item_type(void)
 	s = parse_str(0);
 	if (strcmp(s, "GROUP"))
 	  {
-	     ERR("parse error %s:%i. token %s not one of: GROUP.",
-		 file_in, line - 1, s);
+             ERR("parse error %s:%i. token %s not one of: GROUP.",
+                 file_in, line - 1, s);
+	     free(s);
 	     exit(-1);
 	  }
+	free(s);
 	/* FIXME: handle the enum, once everything else is supported */
 	current_item->type = EDJE_PART_TYPE_GROUP;
      }
@@ -5800,9 +5810,14 @@ static void st_collections_group_parts_part_box_items_item_aspect(void)
     @property
         aspect_mode
     @parameters
-        NONE, NEITHER, HORIZONTAL, VERTICAL, BOTH
+        [mode]
     @effect
-        Sets the aspect control hints for this object.
+        Sets the aspect control hints for this object. Mode can be one of:
+        @li NONE
+        @li NEITHER
+        @li HORIZONTAL
+        @li VERTICAL
+        @li BOTH
     @endproperty
 */
 static void st_collections_group_parts_part_box_items_item_aspect_mode(void)
@@ -5922,9 +5937,8 @@ _copied_map_colors_get(Edje_Part_Description_Common *parent)
    return colors;
 }
 
-/**
-   @edcsubsection{collections_group_parts_description,Description}
- */
+/** @edcsubsection{collections_group_parts_description,
+ *                 Group.Parts.Part.Description} */
 
 /**
     @page edcref
@@ -6044,115 +6058,6 @@ ob_collections_group_parts_part_desc(void)
    stack_pop_quick(EINA_TRUE, EINA_TRUE);
    stack_push_quick("description");
    ob_collections_group_parts_part_description();
-}
-
-static void
-ob_collections_group_parts_part_description_link(void)
-{
-   Edje_Part_Collection_Parser *pcp;
-   Edje_Part_Parser *epp;
-   Edje_Part_Description_Link *el;
-
-   pcp = eina_list_last_data_get(edje_collections);
-   epp = (Edje_Part_Parser*)current_part;
-
-   ob_collections_group_programs_program();
-   _edje_program_remove((Edje_Part_Collection*)pcp, current_program);
-   el = mem_alloc(SZ(Edje_Part_Description_Link));
-   el->pr = current_program;
-   el->ed = current_desc;
-   el->epp = epp;
-   pcp->links = eina_list_append(pcp->links, el);
-   current_program->action = EDJE_ACTION_TYPE_STATE_SET;
-	  current_program->state = strdup(current_desc->state.name ?: "default");
-   current_program->value = current_desc->state.value;
-}
-
-/**
-   @edcsubsection{collections_group_parts_description_links,Links}
- */
-
-/**
-    @page edcref
-    @block
-        link
-    @context
-        desc { "default";
-            ..
-            link {
-                base: "edje,signal" "edje";
-                transition: LINEAR 0.2;
-                in: 0.5 0.1;
-                after: "some_program";
-            }
-            ..
-        }
-    @description
-        The link block can be used to create transitions to the enclosing part description state.
-        The result of the above block is identical to creating a program with
-        action: STATE_SET "default";
-        signal: "edje,signal"; source: "edje";
-    @since 1.10
-    @endblock
-
-    @property
-        base
-    @parameters
-        [signal] [source]
-    @effect
-        Defines the signal and source which will trigger the transition to this state.
-        The source parameter is optional here and will be filled with the current group's
-        default value if it is not provided.
-    @since 1.10
-    @endproperty
-*/
-static void
-st_collections_group_parts_part_description_link_base(void)
-{
-   char *name;
-   char buf[4096];
-   Edje_Part_Collection_Parser *pcp;
-   Edje_Part_Description_Link *el, *ell;
-   Eina_List *l;
-
-   pcp = eina_list_last_data_get(edje_collections);
-   el = eina_list_last_data_get(pcp->links);
-
-   if ((!el) || (el->pr != current_program) ||
-       (el->ed != current_desc) || (el->epp != (Edje_Part_Parser*)current_part) ||
-       el->pr->source)
-     ob_collections_group_parts_part_description_link();
-   el = eina_list_last_data_get(pcp->links);
-
-   check_min_arg_count(1);
-   name = parse_str(0);
-   if (current_program->signal && pcp->link_hash)
-     {
-        snprintf(buf, sizeof(buf), "%s\"\"\"%s", current_program->signal, current_program->source ?: "");
-        eina_hash_list_remove(pcp->link_hash, buf, el);
-     }
-   if (!pcp->link_hash)
-     pcp->link_hash = eina_hash_string_superfast_new((Eina_Free_Cb)eina_list_free);
-   free((void*)current_program->signal);
-   current_program->signal = name;
-   if (get_arg_count() == 2)
-     {
-        name = parse_str(1);
-        free((void*)current_program->source);
-        current_program->source = name;
-     }
-   snprintf(buf, sizeof(buf), "%s\"\"\"%s", current_program->signal, current_program->source ?: "");
-   EINA_LIST_FOREACH(eina_hash_find(pcp->link_hash, buf), l, ell)
-     {
-        if (ell->epp == el->epp)
-          {
-             ERR("parse error %s:%i. "
-                 "cannot have multiple links with the same signal on the same part",
-                 file_in, line - 1);
-             exit(-1);
-          }
-     }
-   eina_hash_list_append(pcp->link_hash, buf, el);
 }
 
 /**
@@ -6474,7 +6379,7 @@ _part_description_state_update(Edje_Part_Description_Common *ed)
     @property
         state
     @parameters
-        [a name for the description] [an index]
+        [name for the description] [index]
     @effect
         Sets a name used to identify a description inside a given part.
         Multiple descriptions are used to declare different states of the same
@@ -6575,13 +6480,18 @@ st_collections_group_parts_part_description_hid(void)
     @property
         limit
     @parameters
-        [NONE, WIDTH, HEIGHT or BOTH]
+        [mode]
     @effect
-	Emit a signal when the part size change from zero or to a zero size
-	('limit,width,over', 'limit,width,zero'). By default no signal are
-	emitted.
+        Emit a signal when the part size change from zero or to a zero size
+        ('limit,width,over', 'limit,width,zero'). By default no signal are
+        emitted. Valid values are:
+        @li NONE
+        @li WIDTH
+        @li HEIGHT
+        @li BOTH
+
+    @since 1.7
     @endproperty
-    @since 1.7.0
 */
 static void
 st_collections_group_parts_part_description_limit(void)
@@ -6686,11 +6596,13 @@ st_collections_group_parts_part_description_min(void)
       if ((current_part->type != EDJE_PART_TYPE_IMAGE && current_part->type != EDJE_PART_TYPE_GROUP) ||
           !tmp || strcmp(tmp, "SOURCE") != 0)
         {
+           free(tmp);
            ERR("parse error %s:%i. "
                "Only IMAGE and GROUP part can have a min: SOURCE; defined",
                file_in, line - 1);
            exit(-1);
         }
+      free(tmp);
 
       current_desc->min.limit = EINA_TRUE;
    }
@@ -6705,8 +6617,8 @@ st_collections_group_parts_part_description_min(void)
     @effect
         A multiplier FORCIBLY applied to whatever minimum size is only during
         minimum size calculation.
-    @endproperty
     @since 1.2
+    @endproperty
 */
 static void
 st_collections_group_parts_part_description_minmul(void)
@@ -6746,11 +6658,13 @@ st_collections_group_parts_part_description_max(void)
       if (current_part->type != EDJE_PART_TYPE_IMAGE ||
           !tmp || strcmp(tmp, "SOURCE") != 0)
         {
+           free(tmp);
            ERR("parse error %s:%i. "
                "Only IMAGE part can have a max: SOURCE; defined",
                file_in, line - 1);
            exit(-1);
         }
+      free(tmp);
 
       current_desc->max.limit = EINA_TRUE;
    }
@@ -6944,9 +6858,8 @@ st_collections_group_parts_part_description_color3(void)
    ed->text.color3.a = parse_int_range(3, 0, 255);
 }
 
-/**
-   @edcsubsection{collections_group_parts_description_relatives,Relatives (rel1/rel2)}
- */
+/** @edcsubsection{collections_group_parts_description_relatives,
+ *                 Group.Parts.Part.Description.Relatives (rel1/rel2)} */
 
 /**
     @page edcref
@@ -7180,9 +7093,8 @@ st_collections_group_parts_part_description_rel2_to_y(void)
    }
 }
 
-/**
-   @edcsubsection{collections_group_parts_description_image,Image}
- */
+/** @edcsubsection{collections_group_parts_description_image,
+ *                 Group.Parts.Part.Description.Image} */
 
 /**
     @page edcref
@@ -7326,11 +7238,15 @@ st_collections_group_parts_part_description_image_border(void)
     @property
         middle
     @parameters
-        0, 1, NONE, DEFAULT, SOLID
+        [mode]
     @effect
         If border is set, this value tells Edje if the rest of the
         image (not covered by the defined border) will be displayed or not
         or be assumed to be solid (without alpha). The default is 1/DEFAULT.
+        Valid values are:
+        @li 0 or NONE
+        @li 1 or DEFAULT
+        @li SOLID
     @endproperty
 */
 static void
@@ -7363,7 +7279,7 @@ st_collections_group_parts_part_description_image_middle(void)
     @property
         border_scale_by
     @parameters
-        0.0 or bigger (0.0 or 1.0 to turn it off)
+        [value]
     @effect
         If border scaling is enabled then normally the OUTPUT border sizes
         (e.g. if 3 pixels on the left edge are set as a border, then normally
@@ -7373,6 +7289,8 @@ st_collections_group_parts_part_description_image_middle(void)
         factor by this multiplier, allowing the creation of "supersampled"
         borders to make much higher resolution outputs possible by always using
         the highest resolution artwork and then runtime scaling it down.
+
+        value can be: 0.0 or bigger (0.0 or 1.0 to turn it off)
     @endproperty
 */
 static void
@@ -7399,7 +7317,7 @@ st_collections_group_parts_part_description_image_border_scale_by(void)
     @property
         border_scale
     @parameters
-        0, 1
+        [0/1]
     @effect
         If border is set, this value tells Edje if the border should be scaled
         by the object/global edje scale factors
@@ -7432,10 +7350,14 @@ st_collections_group_parts_part_description_image_border_scale(void)
     @property
         scale_hint
     @parameters
-        0, NONE, DYNAMIC, STATIC
+        [mode]
     @effect
         Sets the evas image scale hint letting the engine more effectively save
-        cached copies of the scaled image if it makes sense
+        cached copies of the scaled image if it makes sense.
+        Valid values are:
+        @li 0 or NONE
+        @li DYNAMIC
+        @li STATIC
     @endproperty
 */
 static void
@@ -7462,28 +7384,21 @@ st_collections_group_parts_part_description_image_scale_hint(void)
 				      NULL);
 }
 
-/**
-   @edcsubsection{collections_group_parts_description_image_fill,Fill}
- */
+/** @edcsubsection{collections_group_parts_description_image_fill,
+ *                 Group.Parts.Part.Description.Image.Fill} */
 
 /**
     @page edcref
     @block
         fill
     @context
-        description {
+        image {
             ..
             fill {
                 type: SCALE;
                 smooth: 0-1;
-                origin {
-                    relative: X-axis Y-axis;
-                    offset:   X-axis Y-axis;
-                }
-                size {
-                    relative: width  height;
-                    offset:   width  height;
-                }
+                origin { }
+                size { }
             }
             ..
         }
@@ -7494,20 +7409,6 @@ st_collections_group_parts_part_description_image_scale_hint(void)
         part of an image. See @ref evas_object_image_fill_set() documentation
         for more details.
     @endblock
-
-    @property
-        type
-    @parameters
-        SCALE, TILE.
-    @effect
-        Sets the image fill type. SCALE - image will be scaled accordingly params
-        value 'relative' and 'offset' from 'origin' and 'size' blocks.
-        TILE - image will be tiled accordingly params value 'relative' and
-        'offset' from 'origin' and 'size' blocks. Important: the part parameter
-        'min' must be setted, it's size of tiled image. If parameter 'max' setted
-        tiled area will has the size accordingly 'max' values.
-        SCALE is default type.
-    @endproperty
 
     @property
         smooth
@@ -7605,6 +7506,26 @@ st_collections_group_parts_part_description_fill_spread(void)
 #endif
 }
 
+/**
+    @page edcref
+    @property
+        type
+    @parameters
+        [fill type]
+    @effect
+        Sets the image fill type. SCALE - image will be scaled accordingly params
+        value 'relative' and 'offset' from 'origin' and 'size' blocks.
+        TILE - image will be tiled accordingly params value 'relative' and
+        'offset' from 'origin' and 'size' blocks. Important: the part parameter
+        'min' must be setted, it's size of tiled image. If parameter 'max' setted
+        tiled area will has the size accordingly 'max' values.
+        SCALE is default type.
+
+        Valid values are:
+        @li SCALE
+        @li TILE
+    @endproperty
+*/
 static void
 st_collections_group_parts_part_description_fill_type(void)
 {
@@ -7647,16 +7568,15 @@ st_collections_group_parts_part_description_fill_type(void)
                            NULL);
 }
 
-/**
-   @edcsubsection{collections_group_parts_description_image_fill_origin,Origin}
- */
+/** @edcsubsection{collections_group_parts_description_image_fill_origin,
+ *                 Group.Parts.Part.Description.Image.Fill.Origin} */
 
 /**
     @page edcref
     @block
         origin
     @context
-        description {
+        image {
             ..
             fill {
                 ..
@@ -7772,16 +7692,15 @@ st_collections_group_parts_part_description_fill_origin_offset(void)
    fill->pos_abs_y = parse_int(1);
 }
 
-/**
-   @edcsubsection{collections_group_parts_description_image_fill_size,Size}
- */
+/** @edcsubsection{collections_group_parts_description_image_fill_size,
+ *                 Group.Parts.Part.Description.Image.Fill.Size} */
 
 /**
     @page edcref
     @block
         size
     @context
-        description {
+        image {
             ..
             fill {
                 ..
@@ -7900,9 +7819,8 @@ st_collections_group_parts_part_description_fill_size_offset(void)
 }
 
 
-/**
-   @edcsubsection{collections_group_parts_description_text,Text}
- */
+/** @edcsubsection{collections_group_parts_description_text,
+ *                 Group.Parts.Part.Description.Text} */
 
 /**
     @page edcref
@@ -8147,8 +8065,8 @@ st_collections_group_parts_part_description_text_size(void)
     @effect
         Sets the allowed font size for the text part. Setting min and max to 0
         means we won't restrict the sizing (default).
+    @since 1.1
     @endproperty
-    @since 1.1.0
 */
 static void
 st_collections_group_parts_part_description_text_size_range(void)
@@ -8533,9 +8451,8 @@ st_collections_group_parts_part_description_text_filter(void)
 }
 
 
-/**
-   @edcsubsection{collections_group_parts_description_box,Box}
- */
+/** @edcsubsection{collections_group_parts_description_box,
+ *                 Group.Parts.Part.Description.Box} */
 
 /**
     @page edcref
@@ -8550,21 +8467,21 @@ st_collections_group_parts_part_description_text_filter(void)
                     layout: "vertical";
                     padding: 0 2;
                     align: 0.5 0.5;
-		    min: 0 0;
+                    min: 0 0;
                 }
                 ..
             }
         }
     @description
         A box block can contain other objects and display them in different
-	layouts, any of the predefined set, or a custom one, set by the
-	application.
+        layouts, any of the predefined set, or a custom one, set by the
+        application.
     @endblock
 
     @property
         layout
     @parameters
-        [primary layout] [fallback layout]
+        [primary layout] (fallback layout)
     @effect
         Sets the layout for the box:
             @li horizontal (default)
@@ -8688,9 +8605,8 @@ st_collections_group_parts_part_description_box_min(void)
 }
 
 
-/**
-   @edcsubsection{collections_group_parts_description_table,Table}
- */
+/** @edcsubsection{collections_group_parts_description_table,
+ *                 Group.Parts.Part.Description.Table} */
 
 /**
     @page edcref
@@ -8870,9 +8786,8 @@ st_collections_group_parts_part_description_table_min(void)
    ed->table.min.v = parse_bool(1);
 }
 
-/**
-   @edcsubsection{collections_group_parts_description_physics,Physics}
- */
+/** @edcsubsection{collections_group_parts_description_physics,
+ *                 Group.Parts.Part.Description.Physics} */
 
 /**
     @page edcref
@@ -8894,12 +8809,8 @@ st_collections_group_parts_part_description_table_min(void)
             light_on: 1;
             z: -15;
             depth: 30;
-            movement_freedom {
-                ..
-            }
-            faces {
-                ..
-            }
+            movement_freedom { }
+            faces { }
         }
         ..
     }
@@ -8922,8 +8833,8 @@ st_collections_group_parts_part_description_table_min(void)
         It is a quantitative measure of an object's resistance to the change of
         its speed. If mass is set to 0 the body will have infinite mass,
         so it will be immovable, static.
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 
 #ifdef HAVE_EPHYSICS
@@ -8952,8 +8863,8 @@ st_collections_group_parts_part_description_physics_mass(void)
         @li inelastically collide for 0 < COR < 1;
         @li completelly stop (no bouncing at all) for COR == 0.
 
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 
 #ifdef HAVE_EPHYSICS
@@ -8982,8 +8893,8 @@ st_collections_group_parts_part_description_physics_restitution(void)
         By default friction value is 0.5 and simulation resulsts will be better
         when friction in non-zero.
 
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 
 #ifdef HAVE_EPHYSICS
@@ -9008,8 +8919,8 @@ st_collections_group_parts_part_description_physics_friction(void)
         If disabled, when the state is set, the body will be moved to
         the position described by the blocks rel1/rel2.
         Default is 1 (enabled).
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 #ifdef HAVE_EPHYSICS
 static void
@@ -9034,8 +8945,8 @@ st_collections_group_parts_part_description_physics_ignore_part_pos(void)
         reduction, with a force applied to it - "like" air resistance.
         The force is applied to slow it down.
         Values should be between 0.0 and 1.0, and are set to 0 by default.
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 #ifdef HAVE_EPHYSICS
 static void
@@ -9066,8 +8977,8 @@ st_collections_group_parts_part_description_physics_damping(void)
         the rigid body is to be deactivated.
         By default linear threshold is 24 pixels / second and angular is
         57.29 degrees / sec (1 rad/sec).
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 #ifdef HAVE_EPHYSICS
 static void
@@ -9094,15 +9005,16 @@ st_collections_group_parts_part_description_physics_sleep(void)
         So if a material different of CUSTOM is set, the properties cited above
         won't be considered.
         Valid types:
-          * CUSTOM
-          * CONCRETE
-          * IRON
-          * PLASTIC
-          * POLYSTYRENE
-          * RUBBER
-          * WOOD
+          @li CUSTOM
+          @li CONCRETE
+          @li IRON
+          @li PLASTIC
+          @li POLYSTYRENE
+          @li RUBBER
+          @li WOOD
+
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 #ifdef HAVE_EPHYSICS
 static void
@@ -9132,8 +9044,8 @@ st_collections_group_parts_part_description_physics_material(void)
         It will set the body mass considering its volume. While a density is
         set, resizing a body will always recalculate its mass.
         When a mass is explicitely set the density will be unset.
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 #ifdef HAVE_EPHYSICS
 static void
@@ -9158,8 +9070,8 @@ st_collections_group_parts_part_description_physics_density(void)
         soft body deformation, so bare in mind that the bodies mass must also
         be changed to have different deformation results.
         Valid values vary from 0.0 to 1.0. Only works on soft bodies and cloths.
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 #ifdef HAVE_EPHYSICS
 static void
@@ -9181,8 +9093,8 @@ st_collections_group_parts_part_description_physics_hardness(void)
         Set body to be affected by world's light or not.
         It won't be respected if world's property "all_bodies" is enabled.
         Disabled by default (0).
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 #ifdef HAVE_EPHYSICS
 static void
@@ -9202,8 +9114,8 @@ st_collections_group_parts_part_description_physics_light_on(void)
         [body position in z axis]
     @effect
         Defines body position in z axis. It's set to -15 by default.
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 #ifdef HAVE_EPHYSICS
 static void
@@ -9223,8 +9135,8 @@ st_collections_group_parts_part_description_physics_z(void)
         [body's depth]
     @effect
         Defines body's depth (z axis). It's set to 30 by default.
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 #ifdef HAVE_EPHYSICS
 static void
@@ -9246,8 +9158,8 @@ st_collections_group_parts_part_description_physics_depth(void)
         This enables backface culling (when the rotated part that normally faces
         the camera is facing away after being rotated etc.).
         This means that the object will be hidden when "backface culled".
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 #ifdef HAVE_EPHYSICS
 static void
@@ -9259,17 +9171,14 @@ st_collections_group_parts_part_description_physics_backface_cull(void)
 }
 #endif
 
-/**
-   @edcsubsection{collections_group_parts_description_physics_movement_freedom,Movement Freedom}
- */
+/** @edcsubsection{collections_group_parts_description_physics_movement_freedom,
+ *                 Group.Parts.Part.Description.Physics.Movement Freedom} */
 
 /**
     @page edcref
     @block
         movement_freedom
     @context
-    description {
-        ..
         physics {
             ...
             movement_freedom {
@@ -9278,8 +9187,6 @@ st_collections_group_parts_part_description_physics_backface_cull(void)
             }
         }
         ..
-    }
-
     @description
         The "movement_freedom" block consists of two blocks to describe all
         the allowed movements for a body.
@@ -9295,8 +9202,8 @@ st_collections_group_parts_part_description_physics_backface_cull(void)
         Block "linear" can be used to allow linear movements in the three
         axes. Allowed values are 0 or 1.
         Axes x and y are enabled by default.
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 #ifdef HAVE_EPHYSICS
 static void
@@ -9320,8 +9227,8 @@ st_collections_group_parts_part_description_physics_movement_freedom_linear(void
         Block "angular" can be used to allow angular movements around the three
         axes. Allowed values are 0 or 1.
         Z axis is enabled by default.
+    @since 1.8
     @endproperty
-    @since 1.8.0
 */
 #ifdef HAVE_EPHYSICS
 static void
@@ -9335,19 +9242,22 @@ st_collections_group_parts_part_description_physics_movement_freedom_angular(voi
 }
 #endif
 
-/**
-   @edcsubsection{collections_group_parts_description_physics_faces,Faces}
- */
+/** @edcsubsection{collections_group_parts_description_physics_faces,
+ *                 Group.Parts.Part.Description.Physics.Faces} */
 
 /**
     @page edcref
     @block
         faces
     @context
-        faces {
-            face {
-                type: BOX_FRONT;
-                source:  "groupname";
+        physics {
+            ...
+            faces {
+                face {
+                    type: BOX_FRONT;
+                    source:  "groupname";
+                }
+                ..
             }
             ..
         }
@@ -9383,23 +9293,23 @@ st_collections_group_parts_part_description_physics_face(void)
     @effect
         Set the face (all caps) from among the available body's shape faces.
         Valid faces:
-            * BOX_MIDDLE_FRONT
-            * BOX_MIDDLE_BACK
-            * BOX_FRONT
-            * BOX_BACK
-            * BOX_LEFT
-            * BOX_RIGHT
-            * BOX_TOP
-            * BOX_BOTTOM
-            * CLOTH_FRONT
-            * CLOTH_BACK
-            * CYLINDER_MIDDLE_FRONT
-            * CYLINDER_MIDDLE_BACK
-            * CYLINDER_FRONT
-            * CYLINDER_BACK
-            * CYLINDER_CURVED
-            * SPHERE_FRONT
-            * SPHERE_BACK
+            @li BOX_MIDDLE_FRONT
+            @li BOX_MIDDLE_BACK
+            @li BOX_FRONT
+            @li BOX_BACK
+            @li BOX_LEFT
+            @li BOX_RIGHT
+            @li BOX_TOP
+            @li BOX_BOTTOM
+            @li CLOTH_FRONT
+            @li CLOTH_BACK
+            @li CYLINDER_MIDDLE_FRONT
+            @li CYLINDER_MIDDLE_BACK
+            @li CYLINDER_FRONT
+            @li CYLINDER_BACK
+            @li CYLINDER_CURVED
+            @li SPHERE_FRONT
+            @li SPHERE_BACK
     @endproperty
 */
 #ifdef HAVE_EPHYSICS
@@ -9467,9 +9377,8 @@ st_collections_group_parts_part_description_physics_face_source(void)
 }
 #endif
 
-/**
-   @edcsubsection{collections_group_parts_description_map,Map}
- */
+/** @edcsubsection{collections_group_parts_description_map,
+ *                 Group.Parts.Part.Description.Map} */
 
 /**
     @page edcref
@@ -9725,9 +9634,8 @@ st_collections_group_parts_part_description_map_color(void)
 }
 
 
-/**
-   @edcsubsection{collections_group_parts_description_map_rotation,Rotation}
- */
+/** @edcsubsection{collections_group_parts_description_map_rotation,
+ *                 Group.Parts.Part.Description.Map.Rotation} */
 
 /**
     @page edcref
@@ -9835,9 +9743,8 @@ st_collections_group_parts_part_description_map_rotation_z(void)
    current_desc->map.rot.z = FROM_DOUBLE(parse_float(0));
 }
 
-/**
-   @edcsubsection{collections_group_parts_description_perspective,Perspective}
- */
+/** @edcsubsection{collections_group_parts_description_perspective,
+ *                 Group.Parts.Part.Description.Perspective} */
 
 /**
     @page edcref
@@ -9895,26 +9802,25 @@ st_collections_group_parts_part_description_perspective_focal(void)
 }
 
 
-/**
-   @edcsubsection{collections_group_parts_descriptions_params,Params}
- */
+/** @edcsubsection{collections_group_parts_descriptions_params,
+ *                 Group.Parts.Part.Description.Params} */
 
 /**
     @page edcref
     @block
         params
     @context
-    description {
-        ..
-        params {
-            int: "name" 0;
-            double: "other_name" 0.0;
-            string: "another_name" "some text";
-	    bool: "name" 1;
-	    choice: "some_name" "value";
+        description {
+            ..
+            params {
+                int: "name" 0;
+                double: "other_name" 0.0;
+                string: "another_name" "some text";
+                bool: "name" 1;
+                choice: "some_name" "value";
+            }
+            ..
         }
-        ..
-    }
     @description
         Set parameters for EXTERNAL parts. The value overwrites previous
         definitions with the same name.
@@ -9926,7 +9832,7 @@ _st_collections_group_parts_part_description_params(Edje_External_Param_Type typ
    Edje_Part_Description_External *ed;
    Edje_External_Param *param;
    Eina_List *l;
-   const char *name;
+   char *name;
    int found = 0;
 
    check_arg_count(2);
@@ -9984,6 +9890,8 @@ _st_collections_group_parts_part_description_params(Edje_External_Param_Type typ
 
    if (!found)
      ed->external_params = eina_list_append(ed->external_params, param);
+
+   free(name);
 }
 
 /**
@@ -10068,6 +9976,137 @@ st_collections_group_parts_part_description_params_choice(void)
    _st_collections_group_parts_part_description_params(EDJE_EXTERNAL_PARAM_TYPE_CHOICE);
 }
 
+/** @edcsubsection{collections_group_parts_description_links,
+ *                 Group.Parts.Part.Description.Links} */
+
+/**
+    @page edcref
+    @block
+        link
+    @context
+        description {
+            ..
+            link {
+                base: "edje,signal" "edje";
+                transition: LINEAR 0.2;
+                in: 0.5 0.1;
+                after: "some_program";
+            }
+            ..
+        }
+    @description
+        The link block can be used to create transitions to the enclosing part description state.
+        The result of the above block is identical to creating a program with
+        action: STATE_SET "default";
+        signal: "edje,signal"; source: "edje";
+    @since 1.10
+    @endblock
+*/
+static void
+ob_collections_group_parts_part_description_link(void)
+{
+   Edje_Part_Collection_Parser *pcp;
+   Edje_Part_Parser *epp;
+   Edje_Part_Description_Link *el;
+
+   pcp = eina_list_last_data_get(edje_collections);
+   epp = (Edje_Part_Parser*)current_part;
+
+   ob_collections_group_programs_program();
+   _edje_program_remove((Edje_Part_Collection*)pcp, current_program);
+   el = mem_alloc(SZ(Edje_Part_Description_Link));
+   el->pr = current_program;
+   el->ed = current_desc;
+   el->epp = epp;
+   pcp->links = eina_list_append(pcp->links, el);
+   current_program->action = EDJE_ACTION_TYPE_STATE_SET;
+   current_program->state = strdup(current_desc->state.name ?: "default");
+   current_program->value = current_desc->state.value;
+}
+
+/**
+    @page edcref
+    @property
+        base
+    @parameters
+        [signal] [source]
+    @effect
+        Defines the signal and source which will trigger the transition to this state.
+        The source parameter is optional here and will be filled with the current group's
+        default value if it is not provided.
+    @since 1.10
+    @endproperty
+*/
+static void
+st_collections_group_parts_part_description_link_base(void)
+{
+   char *name;
+   char buf[4096];
+   Edje_Part_Collection_Parser *pcp;
+   Edje_Part_Description_Link *el, *ell;
+   Eina_List *l;
+
+   pcp = eina_list_last_data_get(edje_collections);
+   el = eina_list_last_data_get(pcp->links);
+
+   if ((!el) || (el->pr != current_program) ||
+       (el->ed != current_desc) || (el->epp != (Edje_Part_Parser*)current_part) ||
+       el->pr->source)
+     ob_collections_group_parts_part_description_link();
+   el = eina_list_last_data_get(pcp->links);
+
+   check_min_arg_count(1);
+   name = parse_str(0);
+   if (current_program->signal && pcp->link_hash)
+     {
+        snprintf(buf, sizeof(buf), "%s\"\"\"%s", current_program->signal, current_program->source ?: "");
+        eina_hash_list_remove(pcp->link_hash, buf, el);
+     }
+   if (!pcp->link_hash)
+     pcp->link_hash = eina_hash_string_superfast_new((Eina_Free_Cb)eina_list_free);
+   free((void*)current_program->signal);
+   current_program->signal = name;
+   if (get_arg_count() == 2)
+     {
+        name = parse_str(1);
+        free((void*)current_program->source);
+        current_program->source = name;
+     }
+   snprintf(buf, sizeof(buf), "%s\"\"\"%s", current_program->signal, current_program->source ?: "");
+   EINA_LIST_FOREACH(eina_hash_find(pcp->link_hash, buf), l, ell)
+     {
+        if (ell->epp == el->epp)
+          {
+             ERR("parse error %s:%i. "
+                 "cannot have multiple links with the same signal on the same part",
+                 file_in, line - 1);
+             exit(-1);
+          }
+     }
+   eina_hash_list_append(pcp->link_hash, buf, el);
+}
+
+/** @edcsubsection{collections_group_programs,
+ *                 Group.Programs} */
+
+/**
+    @page edcref
+    @block
+        programs
+    @context
+        group {
+            programs {
+                ..
+                program { }
+                program { }
+                program { }
+                ..
+            }
+        }
+    @description
+        The programs group contain one ore more program.
+    @endblock
+*/
 static void
 _program_sequence_check(void)
 {
@@ -10120,33 +10159,30 @@ _program_sequence_new(void)
    return current_program = ep;
 }
 
-/**
-   @edcsubsection{collections_group_programs,Programs}
- */
+/** @edcsubsection{collections_group_programs_program,
+ *                 Group.Programs.Program} */
 
 /**
     @page edcref
     @block
-        programs
+        program
     @context
-        group {
-            programs {
-               ..
-                  program {
-                     name: "programname";
-                     signal: "signalname";
-                     source: "partname";
-                     filter: "partname" "statename";
-                     in: 0.3 0.0;
-                     action: STATE_SET "statename" state_value;
-                     transition: LINEAR 0.5;
-                     target: "partname";
-                     target: "anotherpart";
-                     after: "programname";
-                     after: "anotherprogram";
-                  }
-               ..
+        programs {
+            ..
+            program {
+                name: "programname";
+                signal: "signalname";
+                source: "partname";
+                filter: "partname" "statename";
+                in: 0.3 0.0;
+                action: STATE_SET "statename" state_value;
+                transition: LINEAR 0.5;
+                target: "partname";
+                target: "anotherpart";
+                after: "programname";
+                after: "anotherprogram";
             }
+            ..
         }
     @description
         Programs define how your interface reacts to events.
@@ -10338,37 +10374,42 @@ st_collections_group_programs_program_in(void)
     @property
         action
     @parameters
-        [type] [param1] [param2]
+        [type] (param1) (param2) (param3) (param4)
     @effect
-        Action to be performed by the program. Valid actions are: STATE_SET,
-        ACTION_STOP, SIGNAL_EMIT, DRAG_VAL_SET, DRAG_VAL_STEP, DRAG_VAL_PAGE,
-        FOCUS_SET, PARAM_COPY, PARAM_SET, PLAY_SAMPLE, PLAY_TONE, PLAY_VIBRATION,
-        PHYSICS_IMPULSE, PHYSICS_TORQUE_IMPULSE, PHYSICS_FORCE, PHYSICS_TORQUE,
-        PHYSICS_FORCES_CLEAR, PHYSICS_VEL_SET, PHYSICS_ANG_VEL_SET,
-        PHYSICS_STOP, PHYSICS_ROT_SET
-        Only one action can be specified per program. Examples:\n
-           action: STATE_SET "statename" 0.5;\n
-           action: ACTION_STOP;\n
-           action: SIGNAL_EMIT "signalname" "emitter";\n
-           action: DRAG_VAL_SET 0.5 0.0;\n
-           action: DRAG_VAL_STEP 1.0 0.0;\n
-           action: DRAG_VAL_PAGE 0.0 0.0;\n
-           action: FOCUS_SET;\n
-           action: FOCUS_OBJECT;\n
-           action: PARAM_COPY "src_part" "src_param" "dst_part" "dst_param";\n
-           action: PARAM_SET "part" "param" "value";\n
-           action: PLAY_SAMPLE "sample name" speed (speed of sample - 1.0 is original speed - faster is higher pitch) [channel optional EFFECT/FX | BACKGROUND/BG | MUSIC/MUS | FOREGROUND/FG | INTERFACE/UI | INPUT | ALERT;\n
-           action: PLAY_TONE "tone name" duration in seconds ( Range 0.1 to 10.0 );\n
-           action: PLAY_VIBRATION "sample name" repeat (repeat count);\n
-           action: PHYSICS_IMPULSE 10 -23.4 0;\n
-           action: PHYSICS_TORQUE_IMPULSE 0 2.1 0.95;\n
-           action: PHYSICS_FORCE -20.8 0 30.85;\n
-           action: PHYSICS_TORQUE 0 0 4.8;\n
-           action: PHYSICS_FORCES_CLEAR;\n
-           action: PHYSICS_VEL_SET 40.9 0 0;\n
-           action: PHYSICS_ANG_VEL_SET 12.4 0 0.66;\n
-           action: PHYSICS_STOP;\n
-           action: PHYSICS_ROT_SET 0.707 0 0 0.707;\n
+        Action to be performed by the program. Valid actions are:
+        @li STATE_SET "state name" (state value)
+        @li ACTION_STOP
+        @li SIGNAL_EMIT "signalname" "emitter"
+        @li DRAG_VAL_SET 0.5 0.0
+        @li DRAG_VAL_STEP 1.0 0.0
+        @li DRAG_VAL_PAGE 0.0 0.0
+        @li FOCUS_SET
+        @li PARAM_COPY "src_part" "src_param" "dst_part" "dst_param"
+        @li PARAM_SET "part" "param" "value"
+        @li PLAY_SAMPLE "sample name" speed (channel)
+        @li PLAY_TONE "tone name" duration_in_seconds( Range 0.1 to 10.0 )
+        @li PLAY_VIBRATION "sample name" repeat (repeat count)
+        @li PHYSICS_IMPULSE 10 -23.4 0
+        @li PHYSICS_TORQUE_IMPULSE 0 2.1 0.95
+        @li PHYSICS_FORCE -20.8 0 30.85
+        @li PHYSICS_TORQUE 0 0 4.8
+        @li PHYSICS_FORCES_CLEAR
+        @li PHYSICS_VEL_SET 40.9 0 0
+        @li PHYSICS_ANG_VEL_SET 12.4 0 0.66
+        @li PHYSICS_STOP
+        @li PHYSICS_ROT_SET 0.707 0 0 0.707
+
+        Only one action can be specified per program.
+        
+        PLAY_SAMPLE (optional) channel can be one of:
+        @li EFFECT/FX
+        @li BACKGROUND/BG
+        @li MUSIC/MUS
+        @li FOREGROUND/FG
+        @li INTERFACE/UI
+        @li INPUT
+        @li ALERT
+
     @endproperty
 */
 static void
@@ -10580,16 +10621,22 @@ st_collections_group_programs_program_action(void)
     @property
         transition
     @parameters
-        [type] [length] [[interp val 1]] [[interp val 2]] [[option]]
+        [type] [length] (interp val 1) (interp val 2) (option)
     @effect
         Defines how transitions occur using STATE_SET action.\n
         Where 'type' is the style of the transition and 'length' is a double
         specifying the number of seconds in which to preform the transition.\n
-        Valid types are: LIN or LINEAR, SIN or SINUSOIDAL, 
-        ACCEL or ACCELERATE, DECEL or DECELERATE, 
-        ACCEL_FAC or ACCELERATE_FACTOR, DECEL_FAC or DECELERATE_FACTOR,
-        SIN_FAC or SINUSOIDAL_FACTOR, DIVIS or DIVISOR_INTERP,
-        BOUNCE, SPRING.
+        Valid types are:
+        @li LIN or LINEAR
+        @li SIN or SINUSOIDAL
+        @li ACCEL or ACCELERATE
+        @li DECEL or DECELERATE
+        @li ACCEL_FAC or ACCELERATE_FACTOR
+        @li DECEL_FAC or DECELERATE_FACTOR
+        @li SIN_FAC or SINUSOIDAL_FACTOR
+        @li DIVIS or DIVISOR_INTERP
+        @li BOUNCE
+        @li SPRING
         
         ACCEL_FAC, DECEL_FAC and SIN_FAC need the extra optional
         "interp val 1" to determine the "factor" of curviness. 1.0 is the same
@@ -10616,16 +10663,17 @@ st_collections_group_programs_program_action(void)
         spring "swings" and val 1 specifies the decay, but it can exceed 1.0
         on the outer swings.
 
-        Valid option is CURRENT.
-
-        CURRENT is the option which causes the edje object to move from its current position.
-        It can be used as the last parameter of any transition type. (@since 1.1.0)
+        Valid options are:
+        @li CURRENT causes the object to move from its current position.
+        Can be used as the last parameter of any transition type. (since 1.1.0)
 
     @endproperty
 */
 static void
 st_collections_group_programs_program_transition(void)
 {
+   char *tmp = NULL;
+
    check_min_arg_count(2);
 
    _program_sequence_check();
@@ -10663,10 +10711,15 @@ st_collections_group_programs_program_transition(void)
    if ((current_program->tween.mode >= EDJE_TWEEN_MODE_LINEAR) &&
        (current_program->tween.mode <= EDJE_TWEEN_MODE_DECELERATE))
      {
-        if ((get_arg_count() == 3) && (!strcmp(parse_str(2), "CURRENT")))
-          current_program->tween.mode |= EDJE_TWEEN_MODE_OPT_FROM_CURRENT;
+        tmp = NULL;
+        if ((get_arg_count() == 3) && (!strcmp((tmp = parse_str(2)), "CURRENT")))
+          {
+             free(tmp);
+             current_program->tween.mode |= EDJE_TWEEN_MODE_OPT_FROM_CURRENT;
+          }
         else if (get_arg_count() != 2)
           {
+             free(tmp);
              ERR("parse error %s:%i. Need 2rd parameter to set time",
                  file_in, line - 1);
              exit(-1);
@@ -10680,10 +10733,15 @@ st_collections_group_programs_program_transition(void)
    else if ((current_program->tween.mode >= EDJE_TWEEN_MODE_ACCELERATE_FACTOR) &&
        (current_program->tween.mode <= EDJE_TWEEN_MODE_SINUSOIDAL_FACTOR))
      {
-        if ((get_arg_count() == 4) && (!strcmp(parse_str(3), "CURRENT")))
-          current_program->tween.mode |= EDJE_TWEEN_MODE_OPT_FROM_CURRENT;
+        tmp = NULL;
+        if ((get_arg_count() == 4) && (!strcmp((tmp = parse_str(3)), "CURRENT")))
+          {
+             free(tmp);
+             current_program->tween.mode |= EDJE_TWEEN_MODE_OPT_FROM_CURRENT;
+          }
         else if (get_arg_count() != 3)
           {
+             free(tmp);
 	     ERR("parse error %s:%i. Need 3rd parameter to set factor",
 		 file_in, line - 1);
 	     exit(-1);
@@ -10698,10 +10756,15 @@ st_collections_group_programs_program_transition(void)
    else if ((current_program->tween.mode >= EDJE_TWEEN_MODE_DIVISOR_INTERP) &&
             (current_program->tween.mode <= EDJE_TWEEN_MODE_SPRING))
      {
-        if ((get_arg_count() == 5) && (!strcmp(parse_str(4), "CURRENT")))
-          current_program->tween.mode |= EDJE_TWEEN_MODE_OPT_FROM_CURRENT;
+        tmp = NULL;
+        if ((get_arg_count() == 5) && (!strcmp((tmp = parse_str(4)), "CURRENT")))
+          {
+             free(tmp);
+             current_program->tween.mode |= EDJE_TWEEN_MODE_OPT_FROM_CURRENT;
+          }
         else if (get_arg_count() != 4)
           {
+             free(tmp);
 	     ERR("parse error %s:%i. "
 		 "Need 3rd and 4th parameters to set factor and counts",
 		 file_in, line - 1);
@@ -10712,10 +10775,15 @@ st_collections_group_programs_program_transition(void)
      }
    else if (current_program->tween.mode == EDJE_TWEEN_MODE_CUBIC_BEZIER)
      {
-        if ((get_arg_count() == 7) && (!strcmp(parse_str(4), "CURRENT")))
-          current_program->tween.mode |= EDJE_TWEEN_MODE_OPT_FROM_CURRENT;
+        tmp = NULL;
+        if ((get_arg_count() == 7) && (!strcmp((tmp = parse_str(4)), "CURRENT")))
+          {
+             free(tmp);
+             current_program->tween.mode |= EDJE_TWEEN_MODE_OPT_FROM_CURRENT;
+          }
         else if (get_arg_count() != 6)
           {
+             free(tmp);
              ERR("parse error %s:%i. "
              "Need 3rd, 4th, 5th and 6th parameters to set x1, y1, x2 and y2",
              file_in, line - 1);
@@ -10815,11 +10883,11 @@ st_collections_group_programs_program_target(void)
         target
     @parameters
         [target1] [target2] [target3] ...
-    @since 1.10
     @effect
         Programs or parts upon which the specified action will act. Multiple target
         or targets keywords may be specified. SIGNAL_EMITs can have
         targets.
+    @since 1.10
     @endproperty
 */
 static void
@@ -10842,10 +10910,10 @@ st_collections_group_programs_program_targets(void)
         groups
     @parameters
         [group1] [group2] [group3] ...
-    @since 1.10
     @effect
         Groups of programs or parts upon which the specified action will act. Multiple 'groups', 'target',
         and 'targets' keywords may be specified. SIGNAL_EMITs can have targets.
+    @since 1.10
     @endproperty
 */
 static void
@@ -10938,9 +11006,8 @@ st_collections_group_programs_program_api(void)
      }
 }
 
-/**
-   @edcsubsection{collections_group_program_sequence,Sequence}
- */
+/** @edcsubsection{collections_group_program_sequence,
+ *                 Group.Programs.Program.Sequence} */
 
 /**
     @page edcref
@@ -11073,9 +11140,8 @@ ob_collections_group_programs_program_script(void)
      }
 }
 
-/**
-   @edcsubsection{collections_group_physics,Physics}
- */
+/** @edcsubsection{collections_group_physics,
+ *                 Group.Physics} */
 
 /**
     @page edcref
@@ -11097,9 +11163,8 @@ ob_collections_group_programs_program_script(void)
     @endblock
  */
 
-/**
-   @edcsubsection{collections_group_physics_world,World}
- */
+/** @edcsubsection{collections_group_physics_world,
+ *                Group.Physics.World} */
 
 /**
     @page edcref
@@ -11130,8 +11195,8 @@ ob_collections_group_programs_program_script(void)
         Its unit is Evas Coordinates per second ^ 2.
         The default value is 0, 294, 0, since we've a default rate of
         30 pixels.
+    @since 1.8
     @endproperty
-    @since 1.8.0
  */
 #ifdef HAVE_EPHYSICS
 static void
@@ -11159,8 +11224,8 @@ st_collections_group_physics_world_gravity(void)
         It will be used by automatic updates of evas objects associated to
         physics bodies.
         By default rate is 30 pixels per meter.
+    @since 1.8
     @endproperty
-    @since 1.8.0
  */
 #ifdef HAVE_EPHYSICS
 static void
@@ -11185,8 +11250,8 @@ st_collections_group_physics_world_rate(void)
         World's depth, in pixels. It's only relevant if boundaries are used,
         since their size depends on this.
         By default world's depth is 100 pixels.
+    @since 1.8
     @endproperty
-    @since 1.8.0
  */
 #ifdef HAVE_EPHYSICS
 static void
@@ -11212,8 +11277,8 @@ st_collections_group_physics_world_depth(void)
         It's only relevant if boundaries are used, since their position
         depends on this.
         By default world's z is -50 pixels.
+    @since 1.8
     @endproperty
-    @since 1.8.0
  */
 #ifdef HAVE_EPHYSICS
 static void

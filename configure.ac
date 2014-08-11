@@ -1,5 +1,5 @@
-EFL_VERSION([1], [10], [99], [dev])
-AC_INIT([efl], [efl_version], [enlightenment-devel@lists.sourceforge.net])
+EFL_VERSION([1], [11], [0], [release])
+AC_INIT([efl], [efl_version-beta2], [enlightenment-devel@lists.sourceforge.net])
 
 AC_PREREQ([2.60])
 AC_CONFIG_SRCDIR([configure.ac])
@@ -16,7 +16,7 @@ AH_BOTTOM([
 
 AC_USE_SYSTEM_EXTENSIONS
 
-AM_INIT_AUTOMAKE([1.6 dist-bzip2 dist-xz -Wall -Wno-portability color-tests])
+AM_INIT_AUTOMAKE([1.6 dist-bzip2 dist-xz -Wall color-tests])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 CFOPT_WARNING=""
@@ -187,6 +187,7 @@ AC_SUBST(EFL_VERSION_MINOR)
 have_systemd_pkg="no"
 have_win32="no"
 have_windows="no"
+have_freebsd="no"
 have_darwin="no"
 have_linux="no"
 have_ps3="no"
@@ -196,6 +197,9 @@ case "$host_os" in
       have_win32="yes"
       have_windows="yes"
       EFL_CFLAGS="${EFL_CFLAGS} -D__USE_MINGW_ANSI_STDIO"
+   ;;
+   freebsd*)
+      have_freebsd="yes"
    ;;
    darwin*)
       have_darwin="yes"
@@ -221,6 +225,9 @@ AM_CONDITIONAL([HAVE_WIN32], [test "x${have_win32}" = "xyes"])
 AM_CONDITIONAL([HAVE_WINDOWS], [test "x${have_windows}" = "xyes"])
 AM_CONDITIONAL([HAVE_PS3], [test "x${have_ps3}" = "xyes"])
 
+AM_CONDITIONAL([HAVE_FREEBSD], [test "x${have_freebsd}" = "xyes"])
+AM_CONDITIONAL([HAVE_OSX], [test "x${have_darwin}" = "xyes"])
+AM_CONDITIONAL([HAVE_X86_64], [test "x${host_cpu}" = "xx86_64"])
 
 #### Checks for programs
 
@@ -305,12 +312,12 @@ EFL_CHECK_DOXYGEN([build_doc="yes"], [build_doc="no"])
 if test "${want_coverage}" = "yes" ; then
    AC_CHECK_PROG([have_lcov], [lcov], [yes], [no])
    if test "x${have_lcov}" = "xyes" ; then
-      EFL_COV_CFLAGS="${EFL_COV_CFLAGS} -fprofile-arcs -ftest-coverage"
-      EFL_COV_LIBS="${EFL_COV_LIBS} -lgcov"
+      EFLALL_COV_CFLAGS="${EFLALL_COV_CFLAGS} -fprofile-arcs -ftest-coverage"
+      EFLALL_COV_LIBS="${EFLALL_COV_LIBS} -lgcov"
       if test "x${prefer_assert}" = "xno"; then
-         EFL_COV_CFLAGS="${EFL_COV_CFLAGS} -DNDEBUG"
+         EFLALL_COV_CFLAGS="${EFLALL_COV_CFLAGS} -DNDEBUG"
       else
-         EFL_COV_CFLAGS="${EFL_COV_CFLAGS} -g -O0 -DDEBUG"
+         EFLALL_COV_CFLAGS="${EFLALL_COV_CFLAGS} -g -O0 -DDEBUG"
       fi
    else
       AC_MSG_ERROR([lcov is not found])
@@ -1237,7 +1244,7 @@ AC_ARG_ENABLE([sdl],
    [want_sdl="no"])
 
 if test "${want_sdl}" = "yes"; then
-   EFL_PKG_CHECK_STRICT([sdl >= 1.2.0])
+   EFL_PKG_CHECK_STRICT([sdl2 >= 2.0.0])
 fi
 
 # We only enable SDL with opengl if it is not the full version and not ES
@@ -1732,7 +1739,7 @@ fi
 
 # OpenGL common
 evas_engine_gl_common_cflags=""
-if text "x${have_egl}" = "xyes"; then
+if test "x${have_egl}" = "xyes"; then
    evas_engine_gl_common_libs="-lEGL"
 else
    evas_engine_gl_common_libs="-lGL"
@@ -1875,7 +1882,7 @@ if test "x${want_evas_cserve2}" = "xyes"; then
    if test "x${ac_cv_header_sys_epoll_h}" = "xno" || test "x${ac_cv_header_sys_inotify_h}" = "xno" || test "x${ac_cv_header_sys_signalfd_h}" = "xno"; then
       want_evas_cserve2="no"
    else
-      EVAS_CSERVE2_SLAVE_LIBS="${EFL_COV_LIBS} ${EFL_LIBS} ${requirements_libs_shm}"
+      EVAS_CSERVE2_SLAVE_LIBS="${EFLALL_COV_LIBS} ${EFL_LIBS} ${requirements_libs_shm}"
       AC_SUBST([EVAS_CSERVE2_SLAVE_LIBS])
    fi
 fi
@@ -2732,10 +2739,7 @@ EFL_INTERNAL_DEPEND_PKG([ECORE_SDL], [ecore])
 EFL_INTERNAL_DEPEND_PKG([ECORE_SDL], [eo])
 EFL_INTERNAL_DEPEND_PKG([ECORE_SDL], [eina])
 
-EFL_DEPEND_PKG([ECORE_SDL], [SDL], [sdl >= 1.2.0])
-
-PKG_CHECK_EXISTS([sdl >= 1.3.0],
-   [AC_DEFINE(BUILD_ECORE_EVAS_SDL_130, 1, [Support for SVN SDL])])
+EFL_DEPEND_PKG([ECORE_SDL], [SDL], [sdl2 >= 2.0.0])
 
 EFL_EVAL_PKGS([ECORE_SDL])
 
@@ -3618,8 +3622,7 @@ ECORE_EVAS_MODULE([extn], [${want_ecore_evas_extn}])
 ECORE_EVAS_MODULE([ews], [yes])
 ECORE_EVAS_MODULE([fb], [${want_fb}])
 ECORE_EVAS_MODULE([drm], [${want_drm}], 
-  [ EFL_OPTIONAL_INTERNAL_DEPEND_PKG([ECORE_EVAS], [${want_drm}], [ecore-drm])
-    EFL_OPTIONAL_INTERNAL_DEPEND_PKG([EVAS], [${want_drm}], [ecore-drm]) ]
+  [EFL_OPTIONAL_INTERNAL_DEPEND_PKG([ECORE_EVAS], [${want_drm}], [ecore-drm])]
 )
 ECORE_EVAS_MODULE([psl1ght], [${have_ps3}])
 
@@ -4003,6 +4006,7 @@ if test "${want_lua_old}" = "yes"; then
 else
    EFL_DEPEND_PKG([EDJE], [LUAJIT], [luajit >= 2.0.0])
    EFL_DEPEND_PKG([EVAS], [LUAJIT], [luajit >= 2.0.0])
+   EFL_DEPEND_PKG([EVAS_CXX], [LUAJIT], [luajit >= 2.0.0])
 fi
 
 EFL_ADD_LIBS([EDJE], [-lm])

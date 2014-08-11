@@ -12,7 +12,7 @@ class Object (Base) {
    properties {
       a {
          set {
-            return bool(EINA_FALSE);
+            return bool (false);
             value: const;
          }
          get {
@@ -43,15 +43,14 @@ class Object (Base) {
             @inout char b;
             @out double c;
          }
-         return char *(NULL); /*@ comment for method return */
+         return char * (null); /*@ comment for method return */
       }
-      foo2 {
+      foo2 @const {
          /*@ comment foo */
          params {
             @in int a;
             @in const(char)* b;
          }
-         const;
       }
       pure_foo3 {
          /* set as virtual pure - no implementation expected */

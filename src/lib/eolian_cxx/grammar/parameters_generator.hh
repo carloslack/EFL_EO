@@ -86,21 +86,6 @@ operator<<(std::ostream& out, parameters_types const& x)
    return out;
 }
 
-inline
-std::ostream& parameter_names_enumerate(std::ostream& out
-                                        , parameters_container_type const& params)
-{
-   for (auto first = params.begin()
-          , iterator = first
-          , last = params.end()
-          ; iterator != last; ++iterator)
-     {
-        if(iterator != first) out << ", ";
-        out << iterator->name;
-     }
-   return out;
-}
-
 struct
 parameters_list
 {
@@ -168,6 +153,28 @@ parameters_cxx_list
 
 inline std::ostream&
 operator<<(std::ostream& out, parameters_cxx_list const& x)
+{
+   auto first = x._params.cbegin(), last = x._params.cend();
+   for (auto it = first; it != last; ++it)
+     {
+        if (it != first)
+          out << ", ";
+        out << to_cxx(it->type, it->name);
+     }
+   return out;
+}
+
+struct
+constructor_parameters_list
+{
+   parameters_container_type const& _params;
+   constructor_parameters_list(parameters_container_type const& params)
+     : _params(params)
+   {}
+};
+
+inline std::ostream&
+operator<<(std::ostream& out, constructor_parameters_list const& x)
 {
    auto first = x._params.cbegin(),
      last = x._params.cend();

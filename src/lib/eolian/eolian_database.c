@@ -1,3 +1,4 @@
+#include <libgen.h>
 #include <Eina.h>
 #include "eo_parser.h"
 #include "eolian_database.h"
@@ -5,18 +6,28 @@
 Eina_List *_classes = NULL;
 Eina_Hash *_aliases = NULL;
 Eina_Hash *_structs = NULL;
+Eina_Hash *_aliasesf = NULL;
+Eina_Hash *_structsf = NULL;
 Eina_Hash *_filenames = NULL;
 Eina_Hash *_tfilenames = NULL;
 
 static int _database_init_count = 0;
+
+static void
+_hashlist_free(void *data)
+{
+   eina_list_free((Eina_List*)data);
+}
 
 int
 database_init()
 {
    if (_database_init_count > 0) return ++_database_init_count;
    eina_init();
-   _aliases = eina_hash_stringshared_new(EINA_FREE_CB(database_type_del));
+   _aliases = eina_hash_stringshared_new(EINA_FREE_CB(database_typedef_del));
    _structs = eina_hash_stringshared_new(EINA_FREE_CB(database_type_del));
+   _aliasesf = eina_hash_stringshared_new(_hashlist_free);
+   _structsf = eina_hash_stringshared_new(_hashlist_free);
    _filenames = eina_hash_string_small_new(free);
    _tfilenames = eina_hash_string_small_new(free);
    return ++_database_init_count;
@@ -39,6 +50,8 @@ database_shutdown()
            database_class_del(class);
         eina_hash_free(_aliases);
         eina_hash_free(_structs);
+        eina_hash_free(_aliasesf);
+        eina_hash_free(_structsf);
         eina_hash_free(_filenames);
         eina_hash_free(_tfilenames);
         eina_shutdown();
@@ -120,41 +133,52 @@ eolian_eot_file_parse(const char *filepath)
 EAPI Eina_Bool
 eolian_eo_file_parse(const char *filepath)
 {
-   const Eina_List *itr;
-   const Eolian_Class *class = eolian_class_find_by_file(filepath);
+   Eina_Iterator *itr;
+   char *bfiledup = strdup(filepath);
+   char *bfilename = basename(bfiledup);
+   const Eolian_Class *class = eolian_class_get_by_file(bfilename);
    const char *inherit_name;
    Eolian_Implement *impl;
    if (!class)
      {
-        if (!eo_parser_database_fill(filepath, EINA_FALSE)) return EINA_FALSE;
-        class = eolian_class_find_by_file(filepath);
+        if (!eo_parser_database_fill(filepath, EINA_FALSE))
+          {
+             free(bfiledup);
+             return EINA_FALSE;
+          }
+        class = eolian_class_get_by_file(bfilename);
         if (!class)
           {
-             ERR("No class for file %s", filepath);
+             ERR("No class for file %s", bfilename);
+             free(bfiledup);
              return EINA_FALSE;
           }
      }
-   EINA_LIST_FOREACH(eolian_class_inherits_list_get(class), itr, inherit_name)
+   free(bfiledup);
+   itr = eolian_class_inherits_get(class);
+   EINA_ITERATOR_FOREACH(itr, inherit_name)
      {
-        if (!eolian_class_find_by_name(inherit_name))
+        if (!eolian_class_get_by_name(inherit_name))
           {
              char *filename = _eolian_class_to_filename(inherit_name);
              filepath = eina_hash_find(_filenames, filename);
+             free(filename);
              if (!filepath)
                {
                   ERR("Unable to find a file for class %s", inherit_name);
                   return EINA_FALSE;
                }
              if (!eolian_eo_file_parse(filepath)) return EINA_FALSE;
-             if (!eolian_class_find_by_name(inherit_name))
+             if (!eolian_class_get_by_name(inherit_name))
                {
                   ERR("Unable to find class %s", inherit_name);
                   return EINA_FALSE;
                }
-             free(filename);
           }
      }
-   EINA_LIST_FOREACH(eolian_class_implements_list_get(class), itr, impl)
+   eina_iterator_free(itr);
+   itr = eolian_class_implements_get(class);
+   EINA_ITERATOR_FOREACH(itr, impl)
      {
         const Eolian_Class *impl_class;
         const Eolian_Function *impl_func;
@@ -166,6 +190,7 @@ eolian_eo_file_parse(const char *filepath)
              return EINA_FALSE;
           }
      }
+   eina_iterator_free(itr);
    return EINA_TRUE;
 }
 
