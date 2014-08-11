@@ -1,0 +1,5 @@
+class Emotion.AV (Eo.Base)
+{
+    legacy_prefix:null;
+
+}

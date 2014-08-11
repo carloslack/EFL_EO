@@ -1,5 +1,15 @@
 ### Library
 
+EMOTION_EO_GENERATED = \
+           lib/emotion/emotion_av.eo.c \
+           lib/emotion/emotion_av.eo.h
+
+BUILT_SOURCES += $(EMOTION_EO_GENERATED)
+
+emotioneolianfilesdir = $(datadir)/eolian/include/emotion-@VMAJ@
+emotioneolianfiles_DATA = \
+              lib/emotion/emotion_av.eo
+
 lib_LTLIBRARIES += \
 lib/emotion/libemotion.la
 
@@ -13,6 +23,8 @@ lib/emotion/emotion_private.h \
 lib/emotion/emotion_smart.c \
 lib/emotion/emotion_webcam.c \
 lib/emotion/emotion_modules.c \
+lib/emotion/emotion_av.c \
+lib/emotion/emotion_av_private.h \
 lib/emotion/emotion_main.c
 
 lib_emotion_libemotion_la_CPPFLAGS = -I$(top_builddir)/src/lib/efl \
