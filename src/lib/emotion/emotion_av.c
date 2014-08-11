@@ -12,6 +12,26 @@
 #define MY_CLASS EMOTION_AV_CLASS
 #define MY_CLASS_NAME "Emotion_AV"
 
+static void EINA_UNUSED
+_emotion_av_file_set(Eo *obj EINA_UNUSED, Emotion_AV_Data *priv EINA_UNUSED, const char *filename EINA_UNUSED)
+{
+}
+
+static void EINA_UNUSED
+_emotion_av_position_set(Eo *obj EINA_UNUSED, Emotion_AV_Data *priv EINA_UNUSED, double position EINA_UNUSED)
+{
+}
+
+static void EINA_UNUSED
+_emotion_av_volume_set(Eo *obj EINA_UNUSED, Emotion_AV_Data *priv EINA_UNUSED, double volume EINA_UNUSED)
+{
+}
+
+static void EINA_UNUSED
+_emotion_av_play_set(Eo *obj EINA_UNUSED, Emotion_AV_Data *priv EINA_UNUSED, Eina_Bool play EINA_UNUSED)
+{
+}
+
 /**
  * Class definitions
  */

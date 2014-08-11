@@ -2,6 +2,29 @@ class Emotion.AV (Eo.Base)
 {
     legacy_prefix:null;
 
+    methods {
+        file_set {
+            params {
+                @in const(char)* filename;
+            }
+        }
+        position_set {
+            params {
+                double position;
+            }
+        }
+        volume_set {
+            params {
+                double volume;
+            }
+        }
+        play_set {
+            params {
+                Eina_Bool play;
+            }
+        }
+    }
+
     implements {
         Eo.Base.constructor;
         Eo.Base.destructor;
