@@ -2,4 +2,8 @@ class Emotion.AV (Eo.Base)
 {
     legacy_prefix:null;
 
+    implements {
+        Eo.Base.constructor;
+        Eo.Base.destructor;
+    }
 }
