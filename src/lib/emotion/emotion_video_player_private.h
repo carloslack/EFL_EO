@@ -11,6 +11,8 @@ struct _Emotion_Video_Player_Data
    char *filepath;
    char *module_filename;
    double position;
+   double last_known_position;
+   double last_known_volume;
    double volume;
 };
 

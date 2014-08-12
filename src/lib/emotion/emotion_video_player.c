@@ -29,21 +29,37 @@ _emotion_video_player_file_set(Eo *obj EINA_UNUSED, Emotion_Video_Player_Data *p
 }
 
 static void EINA_UNUSED
-_emotion_video_player_position_set(Eo *obj EINA_UNUSED, Emotion_Video_Player_Data *priv EINA_UNUSED, double position EINA_UNUSED)
+_emotion_video_player_position_set(Eo *obj EINA_UNUSED, Emotion_Video_Player_Data *priv, double position)
 {
    EINA_SAFETY_ON_NULL_RETURN(priv->emotion);
+   if(position != priv->last_known_position)
+     {
+        emotion_object_position_set(priv->emotion, position);
+        priv->last_known_position = position;
+     }
 }
 
 static void EINA_UNUSED
-_emotion_video_player_volume_set(Eo *obj EINA_UNUSED, Emotion_Video_Player_Data *priv EINA_UNUSED, double volume EINA_UNUSED)
+_emotion_video_player_volume_set(Eo *obj EINA_UNUSED, Emotion_Video_Player_Data *priv EINA_UNUSED, double volume)
 {
    EINA_SAFETY_ON_NULL_RETURN(priv->emotion);
+
+   if(volume != priv->last_known_volume)
+     {
+        emotion_object_audio_volume_set(priv->emotion, volume);  /**< XXX:Do it through emotion_audio_player? */
+        priv->last_known_volume = volume;
+     }
 }
 
 static void EINA_UNUSED
-_emotion_video_player_play_set(Eo *obj EINA_UNUSED, Emotion_Video_Player_Data *priv EINA_UNUSED, Eina_Bool play EINA_UNUSED)
+_emotion_video_player_play_set(Eo *obj EINA_UNUSED, Emotion_Video_Player_Data *priv EINA_UNUSED, Eina_Bool play)
 {
    EINA_SAFETY_ON_NULL_RETURN(priv->emotion);
+
+   if(play != emotion_object_play_get(priv->emotion))
+     {
+        emotion_object_play_set(priv->emotion, play);
+     }
 }
 
 /**
@@ -63,7 +79,7 @@ _emotion_video_player_constructor(Eo *obj, Emotion_Video_Player_Data *priv, cons
 
    eo_do_super(obj, MY_CLASS, eo_constructor());
    priv->evas = evas;
-
+   priv->last_known_position = 0.0;
 }
 
 static void EINA_UNUSED
