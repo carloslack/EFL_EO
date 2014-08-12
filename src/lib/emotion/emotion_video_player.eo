@@ -1,11 +1,23 @@
-class Emotion.AV (Eo.Base)
+class Emotion.Video.Player (Eo.Base)
 {
     legacy_prefix:null;
 
+    constructors {
+       constructor {
+          /*@ Custom Emotion_Video_player constructor.
+            @def emotion_video_player_constructor
+            @since 1.11
+            @in Evas_Object */
+          params {
+             @in const(Evas_Object)* evas;
+          }
+       }
+    }
     methods {
         file_set {
             params {
-                @in const(char)* filename;
+                @in const(char)* filepath;
+                @in const(char)* backend;
             }
         }
         position_set {

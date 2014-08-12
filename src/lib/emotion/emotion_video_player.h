@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-#include <emotion_av.eo.h>
+#include <emotion_video_player.eo.h>
 
 #ifdef __cplusplus
 }
