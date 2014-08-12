@@ -2,13 +2,16 @@
 
 EMOTION_EO_GENERATED = \
            lib/emotion/emotion_video_player.eo.c \
-           lib/emotion/emotion_video_player.eo.h
+           lib/emotion/emotion_video_player.eo.h \
+           lib/emotion/emotion_audio_player.eo.c \
+           lib/emotion/emotion_audio_player.eo.h
 
 BUILT_SOURCES += $(EMOTION_EO_GENERATED)
 
 emotioneolianfilesdir = $(datadir)/eolian/include/emotion-@VMAJ@
 emotioneolianfiles_DATA = \
-              lib/emotion/emotion_video_player.eo
+              lib/emotion/emotion_video_player.eo \
+              lib/emotion/emotion_audio_player.eo
 
 lib_LTLIBRARIES += \
 lib/emotion/libemotion.la
@@ -25,6 +28,8 @@ lib/emotion/emotion_webcam.c \
 lib/emotion/emotion_modules.c \
 lib/emotion/emotion_video_player.c \
 lib/emotion/emotion_video_player_private.h \
+lib/emotion/emotion_audio_player.c \
+lib/emotion/emotion_audio_player_private.h \
 lib/emotion/emotion_main.c
 
 lib_emotion_libemotion_la_CPPFLAGS = -I$(top_builddir)/src/lib/efl \

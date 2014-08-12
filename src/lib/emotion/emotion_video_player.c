@@ -46,7 +46,7 @@ _emotion_video_player_volume_set(Eo *obj EINA_UNUSED, Emotion_Video_Player_Data 
 
    if(volume != priv->last_known_volume)
      {
-        emotion_object_audio_volume_set(priv->emotion, volume);  /**< XXX:Do it through emotion_audio_player? */
+        emotion_object_audio_volume_set(priv->emotion, volume);
         priv->last_known_volume = volume;
      }
 }

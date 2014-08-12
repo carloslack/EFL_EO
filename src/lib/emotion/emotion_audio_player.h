@@ -1,5 +1,5 @@
-#ifndef _EMOTION_VIDEO_PLAYER_H
-#define _EMOTION_VIDEO_PLAYER_H
+#ifndef _EMOTION_AUDIO_PLAYER_H
+#define _EMOTION_AUDIO_PLAYER_H
 
 #include <Eo.h>
 
@@ -7,9 +7,10 @@
 extern "C" {
 #endif
 
-#include <emotion_video_player.eo.h>
+#include <emotion_audio_player.eo.h>
 
 #ifdef __cplusplus
 }
 #endif
 #endif //_EMOTION_AV_H
+
