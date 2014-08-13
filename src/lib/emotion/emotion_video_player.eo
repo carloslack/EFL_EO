@@ -6,10 +6,11 @@ class Emotion.Video.Player (Eo.Base)
        constructor {
           /*@ Custom Emotion_Video_player constructor.
             @def emotion_video_player_constructor
-            @since 1.11
+            @since 1.12
             @in Evas_Object */
           params {
              @in const(Evas_Object)* evas;
+             @in struct Opaque_Frame_Data * opaque_obj;
           }
        }
     }

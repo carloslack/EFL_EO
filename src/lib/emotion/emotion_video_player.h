@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+struct Opaque_Frame_Data;
+
 #include <emotion_video_player.eo.h>
 
 #ifdef __cplusplus
