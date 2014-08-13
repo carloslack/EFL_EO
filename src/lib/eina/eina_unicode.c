@@ -327,15 +327,15 @@ eina_unicode_utf8_to_unicode(const char *utf, int *_len)
    EINA_SAFETY_ON_NULL_RETURN_VAL(utf, NULL);
 
    len = eina_unicode_utf8_get_len(utf);
-   if (_len)
-      *_len = len;
-   buf = (Eina_Unicode *) calloc(sizeof(Eina_Unicode), (len + 1));
+   if (_len) *_len = len;
+   buf = malloc(sizeof(Eina_Unicode) * (len + 1));
    if (!buf) return buf;
 
    for (i = 0, ind = 0, uind = buf ; i < len ; i++, uind++)
      {
         *uind = eina_unicode_utf8_next_get(utf, &ind);
      }
+   *uind = 0;
 
    return buf;
 }
@@ -343,7 +343,7 @@ eina_unicode_utf8_to_unicode(const char *utf, int *_len)
 EAPI char *
 eina_unicode_unicode_to_utf8(const Eina_Unicode *uni, int *_len)
 {
-   char *buf;
+   char *buf, *buf2;
    const Eina_Unicode *uind;
    char *ind;
    int ulen, len;
@@ -351,7 +351,8 @@ eina_unicode_unicode_to_utf8(const Eina_Unicode *uni, int *_len)
    EINA_SAFETY_ON_NULL_RETURN_VAL(uni, NULL);
 
    ulen = eina_unicode_strlen(uni);
-   buf = (char *) calloc(ulen + 1, EINA_UNICODE_UTF8_BYTES_PER_CHAR);
+   buf = malloc((ulen + 1) * EINA_UNICODE_UTF8_BYTES_PER_CHAR);
+   if (!buf) return NULL;
 
    len = 0;
    for (uind = uni, ind = buf ; *uind ; uind++)
@@ -416,11 +417,15 @@ eina_unicode_unicode_to_utf8(const Eina_Unicode *uni, int *_len)
              /* Do something */
           }
      }
-   buf = realloc(buf, len + 1);
-   buf[len] = '\0';
-   if (_len)
-      *_len = len;
-   return buf;
+   buf2 = realloc(buf, len + 1);
+   if (!buf2)
+     {
+        free(buf);
+        return NULL;
+     }
+   buf2[len] = 0;
+   if (_len) *_len = len;
+   return buf2;
 }
 
 

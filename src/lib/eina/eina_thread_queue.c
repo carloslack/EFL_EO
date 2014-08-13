@@ -415,7 +415,8 @@ eina_thread_queue_send_done(Eina_Thread_Queue *thq, void *allocref)
    if (thq->fd >= 0)
      {
         char dummy = 0;
-        write(thq->fd, &dummy, 1);
+        if (write(thq->fd, &dummy, 1) != 1)
+          fprintf(stderr, "Eina Threadqueue write to fd %i failed\n", thq->fd);
      }
 }
 
@@ -454,14 +455,11 @@ eina_thread_queue_poll(Eina_Thread_Queue *thq, void **allocref)
 
    RWLOCK_LOCK(&(thq->lock_read));
    msg = _eina_thread_queue_msg_fetch(thq, &blk);
+   RWLOCK_UNLOCK(&(thq->lock_read));
    if (msg)
      {
         _eina_thread_queue_wait(thq);
         *allocref = blk;
-     }
-   RWLOCK_UNLOCK(&(thq->lock_read));
-   if (msg)
-     {
 #ifdef ATOMIC
         __atomic_sub_fetch(&(thq->pending), 1, __ATOMIC_RELAXED);
 #else

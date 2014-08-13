@@ -16,7 +16,7 @@ AH_BOTTOM([
 
 AC_USE_SYSTEM_EXTENSIONS
 
-AM_INIT_AUTOMAKE([1.6 dist-bzip2 dist-xz -Wall color-tests])
+AM_INIT_AUTOMAKE([1.6 dist-bzip2 dist-xz -Wall color-tests subdir-objects])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 CFOPT_WARNING=""
@@ -273,6 +273,7 @@ AM_CONDITIONAL([HAVE_PO], [test "x${have_po}" = "xyes"])
 
 ### compilers
 
+AC_PROG_MKDIR_P
 AM_PROG_AS
 AC_PROG_CXX
 AC_PROG_OBJC
@@ -953,8 +954,8 @@ EFL_LIB_START([Eina_Cxx])
 
 EFL_CXX_COMPILE_STDCXX_11([ext])
 want_cxx11="yes"
-AC_ARG_ENABLE([c++11],
-   [AS_HELP_STRING([--disable-c++11],[disable C++11 bindings. @<:@default=enabled@:>@])],
+AC_ARG_ENABLE([cxx-bindings],
+   [AS_HELP_STRING([--disable-cxx-bindings],[disable C++11 bindings. @<:@default=enabled@:>@])],
    [want_cxx11="${enableval}"])
 
 if test "x${HAVE_CXX11}" = "x1" -a "x${want_cxx11}" = "xyes"; then

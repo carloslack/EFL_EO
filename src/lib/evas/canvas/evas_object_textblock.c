@@ -3841,8 +3841,7 @@ skip:
                         ti->parent.text_pos, run_len, EVAS_TEXT_PROPS_MODE_SHAPE);
                }
 
-             while (queue &&
-                   ((queue->start + queue->off) < (run_start + run_len)))
+             while ((queue->start + queue->off) < (run_start + run_len))
                {
                   Evas_Object_Textblock_Text_Item *new_ti;
 
@@ -3856,17 +3855,11 @@ skip:
                   evas_common_text_props_split(&ti->text_props, &new_ti->text_props,
                         new_ti->parent.text_pos - ti->parent.text_pos);
 
-                  if (ti)
-                    {
-                       _layout_text_append_add_logical_item(c, ti, rel);
-                       ti = new_ti;
-                    }
+                  _layout_text_append_add_logical_item(c, ti, rel);
+                  ti = new_ti;
                }
 
-             if (ti)
-               {
-                  _layout_text_append_add_logical_item(c, ti, rel);
-               }
+             _layout_text_append_add_logical_item(c, ti, rel);
 
              str += run_len;
              script_len -= run_len;
@@ -6144,8 +6137,13 @@ _escaped_char_get(const char *s, const char *s_end)
           return NULL;
 
         utf8_char = eina_unicode_unicode_to_utf8(uchar, NULL);
-        strcpy(utf8_escape, utf8_char);
-        free(utf8_char);
+        // eina_unicode_unicode_to_utf8() always creates a string that
+        // is nul terminated - guaranteed
+        if (utf8_char)
+          {
+             strcpy(utf8_escape, utf8_char);
+             free(utf8_char);
+          }
 
         return utf8_escape;
      }

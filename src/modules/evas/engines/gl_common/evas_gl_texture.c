@@ -951,10 +951,11 @@ evas_gl_common_texture_native_new(Evas_Engine_GL_Context *gc, unsigned int w, un
    Evas_GL_Texture *tex;
    int lformat;
 
+   lformat = _evas_gl_texture_search_format(alpha, gc->shared->info.bgra, EVAS_COLORSPACE_ARGB8888);
+   if (lformat < 0) return NULL;
+
    tex = evas_gl_common_texture_alloc(gc, w, h, alpha);
    if (!tex) return NULL;
-
-   lformat = _evas_gl_texture_search_format(alpha, gc->shared->info.bgra, EVAS_COLORSPACE_ARGB8888);
    tex->pt = _pool_tex_native_new(gc, w, h,
                                   *matching_format[lformat].intformat,
                                   *matching_format[lformat].format,
@@ -974,10 +975,11 @@ evas_gl_common_texture_render_new(Evas_Engine_GL_Context *gc, unsigned int w, un
    Evas_GL_Texture *tex;
    int lformat;
 
+   lformat = _evas_gl_texture_search_format(alpha, gc->shared->info.bgra, EVAS_COLORSPACE_ARGB8888);
+   if (lformat < 0) return NULL;
+
    tex = evas_gl_common_texture_alloc(gc, w, h, alpha);
    if (!tex) return NULL;
-
-   lformat = _evas_gl_texture_search_format(alpha, gc->shared->info.bgra, EVAS_COLORSPACE_ARGB8888);
    tex->pt = _pool_tex_render_new(gc, w, h,
                                   *matching_format[lformat].intformat,
                                   *matching_format[lformat].format);
@@ -996,11 +998,11 @@ evas_gl_common_texture_dynamic_new(Evas_Engine_GL_Context *gc, Evas_GL_Image *im
    Evas_GL_Texture *tex;
    int lformat;
 
+   lformat = _evas_gl_texture_search_format(im->alpha, gc->shared->info.bgra, EVAS_COLORSPACE_ARGB8888);
+   if (lformat < 0) return NULL;
+
    tex = evas_gl_common_texture_alloc(gc, im->w, im->h, im->alpha);
    if (!tex) return NULL;
-
-   lformat = _evas_gl_texture_search_format(tex->alpha, gc->shared->info.bgra, EVAS_COLORSPACE_ARGB8888);
-
    tex->pt = _pool_tex_dynamic_new(gc, tex->w, tex->h,
                                    *matching_format[lformat].intformat,
                                    *matching_format[lformat].format);
@@ -1394,25 +1396,25 @@ evas_gl_common_texture_free(Evas_GL_Texture *tex, Eina_Bool force EINA_UNUSED)
    if (tex->pt)
      {
         tex->pt->allocations = eina_list_remove(tex->pt->allocations, tex->apt);
-        if (tex->apt)
-          eina_rectangle_pool_release(tex->apt);
+        if (tex->apt) eina_rectangle_pool_release(tex->apt);
         tex->apt = NULL;
         pt_unref(tex->pt);
+        tex->pt = NULL;
      }
    if (tex->ptt)
      {
         tex->ptt->allocations = eina_list_remove(tex->ptt->allocations, tex->aptt);
-        if (tex->aptt)
-          eina_rectangle_pool_release(tex->aptt);
+        if (tex->aptt) eina_rectangle_pool_release(tex->aptt);
         tex->aptt = NULL;
         pt_unref(tex->ptt);
+        tex->ptt = NULL;
      }
-   if (tex->ptu)
-     pt_unref(tex->ptu);
-   if (tex->ptv)
-     pt_unref(tex->ptv);
-   if (tex->ptuv)
-     pt_unref(tex->ptuv);
+   if (tex->ptu) pt_unref(tex->ptu);
+   if (tex->ptv) pt_unref(tex->ptv);
+   if (tex->ptuv) pt_unref(tex->ptuv);
+   tex->ptu = NULL;
+   tex->ptv = NULL;
+   tex->ptuv = NULL;
 
    evas_gl_common_texture_light_free(tex);
 }
