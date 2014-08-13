@@ -23,7 +23,7 @@ video_obj_signal_play_cb(void *data, Evas_Object *o, const char *emission EINA_U
    Emotion_Video_Player_Data *priv = data;
 
    emotion_object_play_set(priv->emotion, 1);
-   edje_object_signal_emit(priv->edje, "video_state", "play");
+   edje_object_signal_emit(priv->edje_eo, "video_state", "play");
 }
 
 static void
