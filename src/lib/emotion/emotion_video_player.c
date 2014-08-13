@@ -18,7 +18,7 @@
  * Video player Edje action callbacks
  */
 static void
-video_obj_signal_play_cb(void *data, Evas_Object *o, const char *emission EINA_UNUSED, const char *source EINA_UNUSED)
+_video_obj_signal_play_cb(void *data, Evas_Object *evas_obj, const char *emission EINA_UNUSED, const char *source EINA_UNUSED)
 {
    Emotion_Video_Player_Data *priv = data;
 
@@ -27,7 +27,7 @@ video_obj_signal_play_cb(void *data, Evas_Object *o, const char *emission EINA_U
 }
 
 static void
-video_obj_signal_pause_cb(void *data, Evas_Object *o, const char *emission EINA_UNUSED, const char *source EINA_UNUSED)
+_video_obj_signal_pause_cb(void *data, Evas_Object *evas_obj, const char *emission EINA_UNUSED, const char *source EINA_UNUSED)
 {
    Emotion_Video_Player_Data *priv = data;
 
@@ -36,13 +36,40 @@ video_obj_signal_pause_cb(void *data, Evas_Object *o, const char *emission EINA_
 }
 
 static void
-video_obj_signal_stop_cb(void *data, Evas_Object *o, const char *emission EINA_UNUSED, const char *source EINA_UNUSED)
+_video_obj_signal_stop_cb(void *data, Evas_Object *evas_obj, const char *emission EINA_UNUSED, const char *source EINA_UNUSED)
 {
    Emotion_Video_Player_Data *priv = data;
 
    emotion_object_play_set(priv->emotion, 0);
    emotion_object_position_set(priv->emotion, 0);
    edje_object_signal_emit(priv->edje_eo, "video_state", "stop");
+}
+
+static void
+video_obj_signal_jump_cb(void *data, Evas_Object *evas_obj, const char *emission EINA_UNUSED, const char *source)
+{
+   Emotion_Video_Player_Data *priv = data;
+   double x, y;
+
+   edje_object_part_drag_value_get(priv->emotion, source, &x, &y);
+   emotion_object_position_set(priv->emotion, x * emotion_object_play_length_get(priv->emotion) /* len */);
+}
+
+static void
+video_obj_signal_vol_cb(void *data, Evas_Object *evas_obj, const char *emission EINA_UNUSED, const char *source)
+{
+   Emotion_Video_Player_Data *priv = data;
+   double volume;
+   char buf[256];
+
+   edje_object_part_drag_value_get(evas_obj, source, NULL, &volume);
+   if(volume != priv->last_known_volume)
+     {
+        emotion_object_audio_volume_set(priv->emotion, volume);
+        snprintf(buf, sizeof(buf), "vol %.2f", volume);
+        edje_object_part_text_set(evas_obj, "video_volume_txt", buf);
+        priv->last_known_volume = volume; /**< update current volume reference */
+     }
 }
 #endif
 
@@ -61,9 +88,11 @@ _emotion_video_player_file_set(Eo *obj, Emotion_Video_Player_Data *priv EINA_UNU
    EINA_SAFETY_ON_FALSE_RETURN(emotion_object_file_set(priv->emotion, priv->filepath));
 
 #if __USE_EDJE
-   eo_do(priv->edje_eo, edje_object_signal_callback_add(obj, "video_control", "play", video_obj_signal_play_cb, priv));
-   eo_do(priv->edje_eo, edje_object_signal_callback_add(obj, "video_control", "pause", video_obj_signal_pause_cb, priv));
-   eo_do(priv->edje_eo, edje_object_signal_callback_add(obj, "video_control", "stop", video_obj_signal_stop_cb, priv));
+   eo_do(priv->edje_eo, edje_object_signal_callback_add(obj, "video_control", "play", _video_obj_signal_play_cb, priv));
+   eo_do(priv->edje_eo, edje_object_signal_callback_add(obj, "video_control", "pause", _video_obj_signal_pause_cb, priv));
+   eo_do(priv->edje_eo, edje_object_signal_callback_add(obj, "video_control", "stop", _video_obj_signal_stop_cb, priv));
+   eo_do(priv->edje_eo, edje_object_signal_callback_add(obj, "drag", "video_progress", video_obj_signal_jump_cb, priv));
+   eo_do(priv->edje_eo, edje_object_signal_callback_add(obj, "drag", "video_volume", video_obj_signal_vol_cb, priv));
 #else
    (void)obj;
 #endif
