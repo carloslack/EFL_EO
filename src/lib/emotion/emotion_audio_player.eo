@@ -1,6 +1,18 @@
 class Emotion.Audio.Player (Eo.Base)
 {
     legacy_prefix:null;
+    constructors {
+       constructor {
+          /*@ Custom Emotion_Audio_player constructor.
+            @def emotion_audio_player_constructor
+            @since 1.12
+            @in Evas_Object */
+          params {
+             @in const(Evas_Object)* evas;
+             @in struct Opaque_Frame_Audio_Player_Data * opaque_obj;
+          }
+       }
+    }
 
     methods {
         file_set {

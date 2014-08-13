@@ -10,7 +10,7 @@ class Emotion.Video.Player (Eo.Base)
             @in Evas_Object */
           params {
              @in const(Evas_Object)* evas;
-             @in struct Opaque_Frame_Data * opaque_obj;
+             @in struct Opaque_Frame_Video_Player_Data * opaque_obj;
           }
        }
     }

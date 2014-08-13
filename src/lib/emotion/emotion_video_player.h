@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-struct Opaque_Frame_Data;
+struct Opaque_Frame_Video_Player_Data;
 
 #include <emotion_video_player.eo.h>
 

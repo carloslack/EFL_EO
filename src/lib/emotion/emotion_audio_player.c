@@ -40,6 +40,13 @@ _emotion_audio_player_eo_base_constructor(Eo *obj, Emotion_Audio_Player_Data *pr
 }
 
 static void EINA_UNUSED
+_emotion_audio_player_constructor(Eo *obj, Emotion_Audio_Player_Data *priv EINA_UNUSED,
+                                  const Evas_Object *evas EINA_UNUSED, struct Opaque_Frame_Audio_Player_Data *opaque_obj EINA_UNUSED)
+{
+   _emotion_audio_player_eo_base_constructor(obj, priv);
+}
+
+static void EINA_UNUSED
 _emotion_audio_player_eo_base_destructor(Eo *obj, Emotion_Audio_Player_Data *priv EINA_UNUSED)
 {
    eo_do_super(obj, MY_CLASS, eo_destructor());

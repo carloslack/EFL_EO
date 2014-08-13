@@ -9,8 +9,9 @@ typedef struct _Emotion_Video_Player_Data Emotion_Video_Player_Data;
 struct _Emotion_Video_Player_Data
 {
    Eo *obj;
+   Eo *audio_player_obj;
 #if __USE_EDJE
-   Eo *edje_eo;
+   Eo *edje_obj;
 #endif
    const Evas_Object *evas;
    Evas_Object *emotion;

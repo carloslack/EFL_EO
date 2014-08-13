@@ -7,11 +7,17 @@
 #include <Evas.h>
 #include <Eo.h>
 #include <emotion_video_player.h>
+#include <emotion_audio_player.h>
 
 #include "emotion_video_player_private.h"
 
 #define MY_CLASS EMOTION_VIDEO_PLAYER_CLASS
 #define MY_CLASS_NAME "Emotion_Video_Player"
+
+struct Opaque_Frame_Audio_Player_Data {
+};
+
+static struct Opaque_Frame_Audio_Player_Data opaque_audio;
 
 #if __USE_EDJE /**< Defined in emotion_video_player_private.h */
 /**
@@ -23,7 +29,7 @@ _video_obj_signal_play_cb(void *data, Evas_Object *evas_obj, const char *emissio
    Emotion_Video_Player_Data *priv = data;
 
    emotion_object_play_set(priv->emotion, 1);
-   edje_object_signal_emit(priv->edje_eo, "video_state", "play");
+   edje_object_signal_emit(priv->edje_obj, "video_state", "play");
 }
 
 static void
@@ -32,7 +38,7 @@ _video_obj_signal_pause_cb(void *data, Evas_Object *evas_obj, const char *emissi
    Emotion_Video_Player_Data *priv = data;
 
    emotion_object_play_set(priv->emotion, 0);
-   edje_object_signal_emit(priv->edje_eo, "video_state", "pause");
+   edje_object_signal_emit(priv->edje_obj, "video_state", "pause");
 }
 
 static void
@@ -42,7 +48,7 @@ _video_obj_signal_stop_cb(void *data, Evas_Object *evas_obj, const char *emissio
 
    emotion_object_play_set(priv->emotion, 0);
    emotion_object_position_set(priv->emotion, 0);
-   edje_object_signal_emit(priv->edje_eo, "video_state", "stop");
+   edje_object_signal_emit(priv->edje_obj, "video_state", "stop");
 }
 
 static void
@@ -88,11 +94,11 @@ _emotion_video_player_file_set(Eo *obj, Emotion_Video_Player_Data *priv EINA_UNU
    EINA_SAFETY_ON_FALSE_RETURN(emotion_object_file_set(priv->emotion, priv->filepath));
 
 #if __USE_EDJE
-   eo_do(priv->edje_eo, edje_object_signal_callback_add(obj, "video_control", "play", _video_obj_signal_play_cb, priv));
-   eo_do(priv->edje_eo, edje_object_signal_callback_add(obj, "video_control", "pause", _video_obj_signal_pause_cb, priv));
-   eo_do(priv->edje_eo, edje_object_signal_callback_add(obj, "video_control", "stop", _video_obj_signal_stop_cb, priv));
-   eo_do(priv->edje_eo, edje_object_signal_callback_add(obj, "drag", "video_progress", video_obj_signal_jump_cb, priv));
-   eo_do(priv->edje_eo, edje_object_signal_callback_add(obj, "drag", "video_volume", video_obj_signal_vol_cb, priv));
+   eo_do(priv->edje_obj, edje_object_signal_callback_add(obj, "video_control", "play", _video_obj_signal_play_cb, priv));
+   eo_do(priv->edje_obj, edje_object_signal_callback_add(obj, "video_control", "pause", _video_obj_signal_pause_cb, priv));
+   eo_do(priv->edje_obj, edje_object_signal_callback_add(obj, "video_control", "stop", _video_obj_signal_stop_cb, priv));
+   eo_do(priv->edje_obj, edje_object_signal_callback_add(obj, "drag", "video_progress", video_obj_signal_jump_cb, priv));
+   eo_do(priv->edje_obj, edje_object_signal_callback_add(obj, "drag", "video_volume", video_obj_signal_vol_cb, priv));
 #else
    (void)obj;
 #endif
@@ -144,7 +150,8 @@ _emotion_video_player_eo_base_constructor(Eo *obj, Emotion_Video_Player_Data *pr
 }
 
 static void EINA_UNUSED
-_emotion_video_player_constructor(Eo *obj, Emotion_Video_Player_Data *priv, const Evas_Object *evas, struct Opaque_Frame_Data *opaque_obj EINA_UNUSED)
+_emotion_video_player_constructor(Eo *obj, Emotion_Video_Player_Data *priv,
+                                  const Evas_Object *evas, struct Opaque_Frame_Video_Player_Data *opaque_obj EINA_UNUSED)
 {
    EINA_SAFETY_ON_NULL_RETURN(evas);
    EINA_SAFETY_ON_NULL_RETURN(opaque_obj);
@@ -152,8 +159,12 @@ _emotion_video_player_constructor(Eo *obj, Emotion_Video_Player_Data *priv, cons
    eo_do_super(obj, MY_CLASS, eo_constructor());
    priv->evas = evas;
    priv->last_known_position = 0.0;
+
+   // Idea is to rely on audio_player
+   //priv->audio_player_obj = eo_add_custom(MY_CLASS, NULL, emotion_audio_player_constructor(priv->evas, &opaque_audio));
+
 #if __USE_EDJE
-   priv->edje_eo = eo_add_custom(MY_CLASS, NULL, edje_object_constructor());
+   priv->edje_obj = eo_add_custom(MY_CLASS, NULL, edje_object_constructor());
 #endif
 
 }

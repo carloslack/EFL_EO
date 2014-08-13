@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+struct Opaque_Frame_Audio_Player_Data;
+
 #include <emotion_audio_player.eo.h>
 
 #ifdef __cplusplus
